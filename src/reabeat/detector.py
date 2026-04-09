@@ -139,6 +139,7 @@ def detect_beats(
             else:
                 raise gpu_err
         beats = np.array(beat_times, dtype=np.float64)
+        raw_downbeats = np.array(_downbeat_times, dtype=np.float64)
     except (ImportError, ModuleNotFoundError):
         # Should not happen — check_backend() already verified
         raise
@@ -160,8 +161,17 @@ def detect_beats(
     # Compute tempo and time signature
     progress("Computing tempo and time signature...", 0.8)
     tempo = _compute_tempo(beats, config)
-    time_sig_num, time_sig_denom = _estimate_time_signature(beats, tempo)
-    downbeats = _compute_downbeats(beats, time_sig_num)
+
+    # Use beat-this neural downbeats (dedicated model head) instead of
+    # naive every-Nth-beat. Falls back to naive if neural returns empty.
+    if len(raw_downbeats) >= 2:
+        downbeats = raw_downbeats.tolist()
+        time_sig_num = _time_sig_from_downbeats(beats, raw_downbeats)
+        time_sig_denom = 4
+    else:
+        time_sig_num, time_sig_denom = _estimate_time_signature(beats, tempo)
+        downbeats = _compute_downbeats(beats, time_sig_num)
+
     confidence = _compute_confidence(beats, tempo)
 
     progress("Done.", 1.0)
@@ -185,20 +195,48 @@ def detect_beats(
 # Analysis helpers
 # ---------------------------------------------------------------------------
 def _compute_tempo(beats: np.ndarray, config: DetectionConfig) -> float:
-    """Compute tempo from median inter-beat interval."""
+    """Compute tempo from beat positions.
+
+    Uses two methods and picks the more accurate one:
+
+    1. Total span: (n_beats - 1) * 60 / (last - first). Most precise
+       for constant-tempo tracks because it averages out beat-this's
+       20ms frame quantization over the full song length.
+
+    2. Filtered mean: mean of inter-beat intervals after removing
+       outliers (< 0.15s or > 2.0s). Robust against gaps/silences
+       in the audio.
+
+    If both methods agree within 2%, total span is used (higher
+    precision). Otherwise filtered mean is used (outlier-robust).
+    """
     if len(beats) < 2:
         return 120.0
+
+    def _octave_correct(bpm: float) -> float:
+        while bpm < config.min_bpm:
+            bpm *= 2
+        while bpm > config.max_bpm:
+            bpm /= 2
+        return bpm
+
+    # Method 1: total span
+    total_span = float(beats[-1] - beats[0])
+    if total_span <= 0:
+        return 120.0
+    span_bpm = _octave_correct((len(beats) - 1) * 60.0 / total_span)
+
+    # Method 2: filtered mean of inter-beat intervals
     ibis = np.diff(beats)
     ibis = ibis[(ibis > 0.15) & (ibis < 2.0)]
     if len(ibis) == 0:
-        return 120.0
-    median_ibi = float(np.median(ibis))
-    bpm = 60.0 / median_ibi
-    while bpm < config.min_bpm:
-        bpm *= 2
-    while bpm > config.max_bpm:
-        bpm /= 2
-    return bpm
+        return span_bpm
+    mean_bpm = _octave_correct(60.0 / float(np.mean(ibis)))
+
+    # Pick: total span if consistent, filtered mean if gaps/outliers
+    if abs(span_bpm - mean_bpm) / mean_bpm < 0.02:
+        return span_bpm
+    return mean_bpm
 
 
 def _estimate_time_signature(
@@ -218,10 +256,33 @@ def _estimate_time_signature(
     return 4, 4
 
 
+def _time_sig_from_downbeats(
+    beats: np.ndarray, downbeats: np.ndarray
+) -> int:
+    """Derive time signature numerator from neural downbeat spacing.
+
+    Counts beats between consecutive downbeats and returns the most
+    common count (typically 4 for 4/4 or 3 for 3/4).
+    """
+    if len(downbeats) < 2 or len(beats) < 2:
+        return 4
+    counts = []
+    for i in range(len(downbeats) - 1):
+        n = int(np.sum((beats >= downbeats[i] - 0.03) &
+                       (beats < downbeats[i + 1] - 0.03)))
+        if 2 <= n <= 7:
+            counts.append(n)
+    if not counts:
+        return 4
+    # Most common count
+    from collections import Counter
+    return Counter(counts).most_common(1)[0][0]
+
+
 def _compute_downbeats(
     beats: np.ndarray, time_sig_num: int
 ) -> List[float]:
-    """Compute downbeat times from beats and time signature."""
+    """Fallback: compute downbeat times from beats and time signature."""
     if len(beats) == 0:
         return []
     return [float(beats[i]) for i in range(0, len(beats), time_sig_num)]

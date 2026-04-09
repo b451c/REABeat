@@ -106,6 +106,8 @@ local state = {
     tempo_mode = 1,          -- 1=Constant, 2=Variable (per bar)
     marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
     target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
+    align_to_bar = true,     -- Auto-align first downbeat to bar after Match Tempo
+    stretch_mode = 1,        -- 1=Balanced, 2=Transient, 3=Tonal (index into STRETCH_MODES)
     status_message = "",
     status_color = nil,
     last_apply_count = 0,
@@ -329,6 +331,7 @@ local function poll_responses()
         state.beats = r.beats
         state.downbeats = r.downbeats
         state.tempo = r.tempo or 0
+        state.detected_tempo_original = state.tempo
         state.time_sig_num = r.time_sig_num or 4
         state.time_sig_denom = r.time_sig_denom or 4
         state.confidence = r.confidence or 0
@@ -353,9 +356,14 @@ local function poll_responses()
     end
 end
 
+-- Stretch mode flag lookup (matches STRETCH_MODES in reabeat_ui.lua)
+local STRETCH_FLAGS = { [1] = 1, [2] = 4, [3] = 2 }  -- balanced, transient, tonal
+
 -- Apply action
 local function apply_action()
     if not state.detected or not state.beats then return end
+
+    local stretch_flag = STRETCH_FLAGS[state.stretch_mode]
 
     local count = 0
     if state.action_mode == 1 then
@@ -372,7 +380,7 @@ local function apply_action()
         -- Stretch Markers
         local use_downbeats = state.marker_mode == 2
         local beat_list = use_downbeats and state.downbeats or state.beats
-        count = actions.insert_stretch_markers(state.take, beat_list, state.item, false)
+        count = actions.insert_stretch_markers(state.take, beat_list, state.item, false, stretch_flag)
         if count > 0 then
             state.status_message = string.format("%d stretch markers inserted", count)
             state.status_color = "success"
@@ -381,9 +389,15 @@ local function apply_action()
         -- Match Tempo
         local target = state.target_bpm or actions.get_project_bpm()
         if target and target > 0 and state.tempo > 0 then
-            local ok = actions.match_tempo(state.take, state.item, state.tempo, target)
+            local first_db = nil
+            if state.align_to_bar and state.downbeats and #state.downbeats > 0 then
+                first_db = state.downbeats[1]
+            end
+            local ok = actions.match_tempo(state.take, state.item, state.tempo, target, first_db)
             if ok then
-                state.status_message = string.format("Tempo matched: %.1f -> %.1f BPM", state.tempo, target)
+                local msg = string.format("Tempo matched: %.1f -> %.1f BPM", state.tempo, target)
+                if first_db then msg = msg .. " (aligned)" end
+                state.status_message = msg
                 state.status_color = "success"
             end
         else
@@ -399,7 +413,7 @@ local function apply_action()
         if tempo_count > 0 then
             local use_downbeats = state.marker_mode == 2
             local beat_list = use_downbeats and state.downbeats or state.beats
-            count = actions.insert_stretch_markers(state.take, beat_list, state.item, true)
+            count = actions.insert_stretch_markers(state.take, beat_list, state.item, true, stretch_flag)
             if count > 0 then
                 state.status_message = string.format(
                     "%d tempo markers + %d stretch markers (quantized)", tempo_count, count)

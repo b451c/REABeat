@@ -10,6 +10,7 @@ from reabeat.detector import (
     _compute_peaks,
     _compute_tempo,
     _estimate_time_signature,
+    _time_sig_from_downbeats,
     check_backend,
 )
 
@@ -50,6 +51,21 @@ class TestComputeTempo:
         tempo = _compute_tempo(beats, DetectionConfig())
         assert abs(tempo - 120.0) < 5.0
 
+    def test_quantized_beats(self):
+        """Mean handles beat-this 20ms quantization jitter correctly.
+
+        beat-this outputs positions at 20ms resolution. For tempos that
+        fall between frame boundaries, intervals alternate between two
+        values (e.g. 580ms and 600ms for 101.8 BPM). Median would snap
+        to one of those (100.0 BPM), mean converges to the true value.
+        """
+        from reabeat.config import DetectionConfig
+        # Simulate 101.8 BPM quantized to 20ms frames
+        actual_ibi = 60.0 / 101.8
+        beats = np.array([round(i * actual_ibi / 0.02) * 0.02 for i in range(101)])
+        tempo = _compute_tempo(beats, DetectionConfig())
+        assert abs(tempo - 101.8) < 0.5
+
 
 class TestTimeSignature:
     def test_default_4_4(self):
@@ -62,6 +78,21 @@ class TestTimeSignature:
         beats = np.array([0, 0.5, 1.0])
         num, denom = _estimate_time_signature(beats, 120.0)
         assert num == 4
+
+    def test_from_neural_downbeats_4_4(self):
+        beats = np.arange(0, 10, 0.5)      # 20 beats
+        downbeats = np.arange(0, 10, 2.0)   # every 4 beats
+        assert _time_sig_from_downbeats(beats, downbeats) == 4
+
+    def test_from_neural_downbeats_3_4(self):
+        beats = np.arange(0, 9, 0.5)        # 18 beats
+        downbeats = np.arange(0, 9, 1.5)    # every 3 beats
+        assert _time_sig_from_downbeats(beats, downbeats) == 3
+
+    def test_from_neural_downbeats_empty(self):
+        beats = np.arange(0, 10, 0.5)
+        downbeats = np.array([])
+        assert _time_sig_from_downbeats(beats, downbeats) == 4
 
 
 class TestDownbeats:

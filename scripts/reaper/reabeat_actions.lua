@@ -88,8 +88,9 @@ end
 
 --- Insert stretch markers at detected beat positions.
 -- @param quantize_to_grid If true, snaps markers to REAPER grid after insertion
+-- @param stretch_flag Stretch algorithm: 1=balanced, 2=tonal, 4=transient (nil=no change)
 -- @return Number of markers inserted, or 0 if cancelled
-function actions.insert_stretch_markers(take, beat_times, item, quantize_to_grid)
+function actions.insert_stretch_markers(take, beat_times, item, quantize_to_grid, stretch_flag)
     if not take or not beat_times or #beat_times == 0 then return 0 end
 
     -- Warn if existing stretch markers will be replaced
@@ -126,25 +127,30 @@ function actions.insert_stretch_markers(take, beat_times, item, quantize_to_grid
         end
     end
 
-    -- Quantize: snap each stretch marker to REAPER's grid
+    -- Quantize: snap each stretch marker to nearest beat (quarter note).
+    -- Uses TimeMap2 to resolve beat positions from the tempo map,
+    -- independent of REAPER's grid resolution setting.
     if quantize_to_grid and count > 0 then
         local n_markers = reaper.GetTakeNumStretchMarkers(take)
         for i = 0, n_markers - 1 do
             local _, pos = reaper.GetTakeStretchMarker(take, i)
             -- Convert marker position (take-relative) to project time
             local project_time = item_pos + (pos - take_offset)
-            local grid_time
-            if reaper.BR_GetClosestGridDivision then
-                grid_time = reaper.BR_GetClosestGridDivision(project_time)
-            else
-                grid_time = reaper.SnapToGrid(0, project_time)
-            end
+            -- Snap to nearest beat using tempo map (not grid setting)
+            local _, _, _, fullbeats = reaper.TimeMap2_timeToBeats(0, project_time)
+            local nearest_beat = math.floor(fullbeats + 0.5)
+            local grid_time = reaper.TimeMap2_beatsToTime(0, nearest_beat)
             -- Convert back to take-relative position
             local snapped_pos = (grid_time - item_pos) + take_offset
             if math.abs(snapped_pos - pos) > 0.001 then
                 reaper.SetTakeStretchMarker(take, i, snapped_pos)
             end
         end
+    end
+
+    -- Apply stretch algorithm override if specified
+    if stretch_flag and count > 0 then
+        reaper.SetMediaItemTakeInfo_Value(take, "I_STRETCHFLAGS", stretch_flag)
     end
 
     reaper.UpdateItemInProject(item)
@@ -167,8 +173,10 @@ end
 
 --- Match item tempo to target BPM by adjusting playrate.
 -- Preserves pitch using REAPER's elastique engine.
+-- Optionally aligns first downbeat to nearest bar boundary.
+-- @param first_downbeat_src First downbeat position in source (seconds), or nil to skip alignment
 -- @return boolean success
-function actions.match_tempo(take, item, detected_bpm, target_bpm)
+function actions.match_tempo(take, item, detected_bpm, target_bpm, first_downbeat_src)
     if not take or not item then return false end
     if detected_bpm <= 0 or target_bpm <= 0 then return false end
 
@@ -198,10 +206,35 @@ function actions.match_tempo(take, item, detected_bpm, target_bpm)
         reaper.SetMediaItemInfo_Value(item, "D_LENGTH", new_len)
     end
 
+    -- Auto-align: shift item so first downbeat lands on nearest bar
+    if first_downbeat_src then
+        local item_pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+        local take_offset = reaper.GetMediaItemTakeInfo_Value(take, "D_STARTOFFS")
+        -- Where the first downbeat plays on the timeline after rate change
+        local downbeat_timeline = item_pos + (first_downbeat_src - take_offset) / rate
+        -- Find nearest bar boundary
+        local _, measures = reaper.TimeMap2_timeToBeats(0, downbeat_timeline)
+        local nearest_bar_time = reaper.TimeMap2_beatsToTime(0, 0, measures)
+        -- Also check next bar — pick whichever is closer
+        local next_bar_time = reaper.TimeMap2_beatsToTime(0, 0, measures + 1)
+        local snap_to
+        if math.abs(downbeat_timeline - nearest_bar_time) <= math.abs(downbeat_timeline - next_bar_time) then
+            snap_to = nearest_bar_time
+        else
+            snap_to = next_bar_time
+        end
+        -- Shift item so downbeat lands on the bar
+        local shift = snap_to - downbeat_timeline
+        reaper.SetMediaItemInfo_Value(item, "D_POSITION", item_pos + shift)
+    end
+
     reaper.UpdateItemInProject(item)
     reaper.PreventUIRefresh(-1)
-    reaper.Undo_EndBlock(
-        string.format("ReaBeat: Match tempo %.1f -> %.1f BPM", detected_bpm, target_bpm), -1)
+
+    local label = first_downbeat_src
+        and string.format("ReaBeat: Match tempo %.1f -> %.1f BPM (aligned)", detected_bpm, target_bpm)
+        or string.format("ReaBeat: Match tempo %.1f -> %.1f BPM", detected_bpm, target_bpm)
+    reaper.Undo_EndBlock(label, -1)
 
     return true
 end

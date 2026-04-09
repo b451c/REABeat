@@ -149,7 +149,7 @@ function draw_source(ctx, ImGui, C, state, w, callbacks)
         callbacks.on_detect()
     end
     if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
-        ImGui.SetTooltip(ctx, "Analyze beats, tempo, and time signature using neural detection.\nBackends: beat-this > madmom > librosa (auto-fallback)")
+        ImGui.SetTooltip(ctx, "Analyze beats, tempo, and time signature.\nNeural beat detection powered by beat-this (CPJKU, ISMIR 2024).")
     end
     ImGui.PopStyleColor(ctx, n)
     if not can_detect then ImGui.EndDisabled(ctx) end
@@ -168,9 +168,29 @@ end
 function draw_results(ctx, ImGui, C, state, w)
     local c = theme.colors
 
-    -- Compact result line: BPM · Time Sig · Beats · Confidence
+    -- Editable BPM field
+    ImGui.PushStyleColor(ctx, C("Col_FrameBg"), 0x33333300)  -- transparent bg
+    ImGui.PushStyleColor(ctx, C("Col_FrameBgHovered"), c.frame_hover)
+    ImGui.PushStyleColor(ctx, C("Col_FrameBgActive"), c.frame_active)
     ImGui.PushStyleColor(ctx, C("Col_Text"), c.accent)
-    ImGui.Text(ctx, string.format("%.1f BPM", state.tempo))
+    ImGui.SetNextItemWidth(ctx, 52)
+    local changed, new_bpm = ImGui.InputDouble(ctx, "##bpm", state.tempo, 0, 0, "%.1f")
+    if changed then
+        state.tempo = math.max(20, math.min(400, new_bpm))
+    end
+    ImGui.PopStyleColor(ctx, 4)
+    if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+        ImGui.SetTooltip(ctx, "Detected tempo. Click to edit if detection is wrong.\nAffects Match Tempo rate and constant tempo map.")
+    end
+
+    ImGui.SameLine(ctx)
+    ImGui.PushStyleColor(ctx, C("Col_Text"), c.text_dim)
+    -- Show original detection if user edited
+    if state.detected_tempo_original and math.abs(state.tempo - state.detected_tempo_original) > 0.1 then
+        ImGui.Text(ctx, string.format("BPM (was %.1f)", state.detected_tempo_original))
+    else
+        ImGui.Text(ctx, "BPM")
+    end
     ImGui.PopStyleColor(ctx, 1)
 
     ImGui.SameLine(ctx)
@@ -249,6 +269,11 @@ function draw_actions(ctx, ImGui, C, state, w, callbacks)
                 state.tempo, state.target_bpm, rate))
             ImGui.PopStyleColor(ctx, 1)
         end
+        local align_changed, align_val = ImGui.Checkbox(ctx, "Align first downbeat to bar", state.align_to_bar)
+        if align_changed then state.align_to_bar = align_val end
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "After matching tempo, shift the item so the first\ndetected downbeat lands on the nearest bar line.\nSaves manual alignment.")
+        end
         ImGui.Unindent(ctx, 20)
     end
 
@@ -297,6 +322,7 @@ function draw_actions(ctx, ImGui, C, state, w, callbacks)
         if ImGui.RadioButton(ctx, string.format("Downbeats only (%d markers)", #state.downbeats), state.marker_mode == 2) then
             state.marker_mode = 2
         end
+        draw_stretch_mode(ctx, ImGui, C, state)
         ImGui.Unindent(ctx, 20)
     end
 
@@ -318,12 +344,45 @@ function draw_actions(ctx, ImGui, C, state, w, callbacks)
         if ImGui.RadioButton(ctx, string.format("Downbeats only (%d markers)", #state.downbeats), state.marker_mode == 2) then
             state.marker_mode = 2
         end
+        draw_stretch_mode(ctx, ImGui, C, state)
         ImGui.PushStyleColor(ctx, C("Col_Text"), c.text_dim)
         ImGui.Text(ctx, "Inserts tempo map first, then quantizes markers to it.")
         ImGui.PopStyleColor(ctx, 1)
         ImGui.Unindent(ctx, 20)
     end
 
+end
+
+-- Stretch marker algorithm selector
+-- Maps to REAPER's I_STRETCHFLAGS: 0=default, 1=balanced, 4=transient, 2=tonal
+local STRETCH_MODES = {
+    { label = "Balanced",  flag = 1, tip = "General purpose. Good for most material." },
+    { label = "Transient", flag = 4, tip = "Preserves attacks. Best for drums, percussion, rhythmic material." },
+    { label = "Tonal",     flag = 2, tip = "Preserves pitch quality. Best for vocals, melodic instruments, pads." },
+}
+
+function draw_stretch_mode(ctx, ImGui, C, state)
+    local c = theme.colors
+    local mode_idx = state.stretch_mode or 1
+
+    ImGui.Text(ctx, "Stretch quality:")
+    ImGui.SameLine(ctx)
+    ImGui.SetNextItemWidth(ctx, 110)
+    if ImGui.BeginCombo(ctx, "##stretch_mode", STRETCH_MODES[mode_idx].label) then
+        for i, mode in ipairs(STRETCH_MODES) do
+            local selected = (i == mode_idx)
+            if ImGui.Selectable(ctx, mode.label, selected) then
+                state.stretch_mode = i
+            end
+            if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+                ImGui.SetTooltip(ctx, mode.tip)
+            end
+        end
+        ImGui.EndCombo(ctx)
+    end
+    if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+        ImGui.SetTooltip(ctx, STRETCH_MODES[mode_idx].tip)
+    end
 end
 
 function draw_apply(ctx, ImGui, C, state, w, callbacks)

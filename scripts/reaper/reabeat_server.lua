@@ -171,17 +171,26 @@ function server.launch()
     local uv_path = find_command("uv")
 
     if IS_WIN then
-        -- Windows: use start /B for background process
+        -- Windows: write a temp .bat file to avoid nested-quote issues
+        -- (cmd /C "cd /D "path" && ..." breaks when paths contain spaces)
+        local bat_file = TEMP_DIR .. SEP .. "reabeat_launch.bat"
+        local runner = nil
         if uv_path then
-            cmd = string.format(
-                'start /B cmd /C "cd /D "%s" && "%s" run python -m reabeat serve --port %d --idle-timeout %d > "%s" 2>&1"',
-                state.project_root, uv_path, PORT, IDLE_TIMEOUT_SEC, LOG_FILE)
+            runner = string.format('"%s" run python', uv_path)
         else
             local python_path = find_command("python") or find_command("python3")
             if python_path then
-                cmd = string.format(
-                    'start /B cmd /C "cd /D "%s" && "%s" -m reabeat serve --port %d --idle-timeout %d > "%s" 2>&1"',
-                    state.project_root, python_path, PORT, IDLE_TIMEOUT_SEC, LOG_FILE)
+                runner = string.format('"%s"', python_path)
+            end
+        end
+        if runner then
+            local bat = io.open(bat_file, "w")
+            if bat then
+                bat:write(string.format('@cd /D "%s"\r\n', state.project_root))
+                bat:write(string.format('%s -m reabeat serve --port %d --idle-timeout %d > "%s" 2>&1\r\n',
+                    runner, PORT, IDLE_TIMEOUT_SEC, LOG_FILE))
+                bat:close()
+                cmd = string.format('start /B cmd /C "%s"', bat_file)
             end
         end
     else

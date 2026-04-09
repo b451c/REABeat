@@ -1,9 +1,10 @@
--- ReaBeat Actions: REAPER API calls for tempo map and stretch markers
+-- ReaBeat Actions: REAPER API calls for tempo map, stretch markers, match tempo.
 -- All actions wrapped in undo blocks. Warns before destructive operations.
 
 local actions = {}
 
 --- Insert tempo/time signature markers at detected bar positions.
+-- Snaps first beat to nearest bar boundary for grid alignment.
 -- @return Number of markers inserted, or 0 if cancelled
 function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, item, variable)
     if not downbeats or #downbeats == 0 then return 0 end
@@ -17,12 +18,23 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
                 "ReaBeat will ADD new markers (existing ones stay).\n" ..
                 "Use Ctrl+Z to undo if needed.\n\nContinue?",
                 existing),
-            "ReaBeat — Tempo Map", 1)
+            "ReaBeat - Tempo Map", 1)
         if ok ~= 1 then return 0 end
     end
 
     local item_pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
-    item_pos = math.max(0, item_pos)  -- Clamp negative positions
+    item_pos = math.max(0, item_pos)
+
+    -- Snap first beat to nearest bar boundary in REAPER's grid
+    -- This aligns the detected tempo map with REAPER's existing grid
+    local first_beat_time = item_pos + downbeats[1]
+    local snapped_time = first_beat_time
+    if reaper.BR_GetClosestGridDivision then
+        snapped_time = reaper.BR_GetClosestGridDivision(first_beat_time)
+    else
+        snapped_time = reaper.SnapToGrid(0, first_beat_time)
+    end
+    local snap_offset = snapped_time - first_beat_time
 
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
@@ -30,18 +42,18 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
     local count = 0
 
     if not variable then
-        -- Constant tempo: single marker at item start
+        -- Constant tempo: single marker at snapped position
         reaper.SetTempoTimeSigMarker(0, -1,
-            item_pos, -1, -1,
+            item_pos + snap_offset, -1, -1,
             tempo,
             math.floor(ts_num),
             math.floor(ts_denom),
             false)
         count = 1
     else
-        -- Variable tempo: one marker per bar
+        -- Variable tempo: one marker per bar, all shifted by snap_offset
         for i = 1, #downbeats do
-            local bar_time = item_pos + downbeats[i]
+            local bar_time = item_pos + downbeats[i] + snap_offset
             local bar_bpm = tempo
 
             if i < #downbeats then
@@ -75,8 +87,9 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
 end
 
 --- Insert stretch markers at detected beat positions.
+-- @param quantize_to_grid If true, snaps markers to REAPER grid after insertion
 -- @return Number of markers inserted, or 0 if cancelled
-function actions.insert_stretch_markers(take, beat_times, item)
+function actions.insert_stretch_markers(take, beat_times, item, quantize_to_grid)
     if not take or not beat_times or #beat_times == 0 then return 0 end
 
     -- Warn if existing stretch markers will be replaced
@@ -88,9 +101,11 @@ function actions.insert_stretch_markers(take, beat_times, item)
                 "ReaBeat will REPLACE them with %d new markers.\n" ..
                 "Use Ctrl+Z to undo if needed.\n\nContinue?",
                 existing, #beat_times),
-            "ReaBeat — Stretch Markers", 1)
+            "ReaBeat - Stretch Markers", 1)
         if ok ~= 1 then return 0 end
     end
+
+    local item_pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
 
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
@@ -111,10 +126,34 @@ function actions.insert_stretch_markers(take, beat_times, item)
         end
     end
 
+    -- Quantize: snap each stretch marker to REAPER's grid
+    if quantize_to_grid and count > 0 then
+        local n_markers = reaper.GetTakeNumStretchMarkers(take)
+        for i = 0, n_markers - 1 do
+            local _, pos = reaper.GetTakeStretchMarker(take, i)
+            -- Convert marker position (take-relative) to project time
+            local project_time = item_pos + (pos - take_offset)
+            local grid_time
+            if reaper.BR_GetClosestGridDivision then
+                grid_time = reaper.BR_GetClosestGridDivision(project_time)
+            else
+                grid_time = reaper.SnapToGrid(0, project_time)
+            end
+            -- Convert back to take-relative position
+            local snapped_pos = (grid_time - item_pos) + take_offset
+            if math.abs(snapped_pos - pos) > 0.001 then
+                reaper.SetTakeStretchMarker(take, i, snapped_pos)
+            end
+        end
+    end
+
     reaper.UpdateItemInProject(item)
     reaper.PreventUIRefresh(-1)
-    reaper.Undo_EndBlock(
-        string.format("ReaBeat: Insert %d stretch markers", count), -1)
+
+    local label = quantize_to_grid
+        and string.format("ReaBeat: Insert %d stretch markers (quantized)", count)
+        or string.format("ReaBeat: Insert %d stretch markers", count)
+    reaper.Undo_EndBlock(label, -1)
 
     return count
 end
@@ -127,11 +166,7 @@ function actions.get_project_bpm()
 end
 
 --- Match item tempo to target BPM by adjusting playrate.
--- Preserves pitch using REAPER's élastique engine.
--- @param take Media item take
--- @param item Media item
--- @param detected_bpm Detected source BPM
--- @param target_bpm Target BPM to match
+-- Preserves pitch using REAPER's elastique engine.
 -- @return boolean success
 function actions.match_tempo(take, item, detected_bpm, target_bpm)
     if not take or not item then return false end
@@ -139,25 +174,22 @@ function actions.match_tempo(take, item, detected_bpm, target_bpm)
 
     local rate = target_bpm / detected_bpm
 
-    -- Sanity check: don't allow extreme rates (0.25x to 4x)
     if rate < 0.25 or rate > 4.0 then
         reaper.ShowMessageBox(
             string.format(
                 "Tempo ratio too extreme: %.1f BPM -> %.1f BPM (%.1fx)\n\n" ..
                 "Supported range: 0.25x to 4.0x",
                 detected_bpm, target_bpm, rate),
-            "ReaBeat — Match Tempo", 0)
+            "ReaBeat - Match Tempo", 0)
         return false
     end
 
     reaper.Undo_BeginBlock()
     reaper.PreventUIRefresh(1)
 
-    -- Set playrate and preserve pitch
     reaper.SetMediaItemTakeInfo_Value(take, "D_PLAYRATE", rate)
-    reaper.SetMediaItemTakeInfo_Value(take, "B_PPITCH", 1)  -- preserve pitch ON
+    reaper.SetMediaItemTakeInfo_Value(take, "B_PPITCH", 1)
 
-    -- Adjust item length to match new rate
     local source = reaper.GetMediaItemTake_Source(take)
     if source then
         local source_len = reaper.GetMediaSourceLength(source)

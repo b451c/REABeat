@@ -259,6 +259,11 @@ function draw_actions(ctx, ImGui, C, state, w, callbacks)
         if ImGui.RadioButton(ctx, string.format("Downbeats only (%d markers)", #state.downbeats), state.marker_mode == 2) then
             state.marker_mode = 2
         end
+        local changed, val = ImGui.Checkbox(ctx, "Quantize to grid", state.quantize_to_grid or false)
+        if changed then state.quantize_to_grid = val end
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "Snap each stretch marker to REAPER's grid after insertion.\nUseful for tightening timing to your project's grid.")
+        end
         ImGui.Unindent(ctx, 20)
     end
 

@@ -66,6 +66,9 @@ local function C(name)
     return const_cache[name]
 end
 
+-- Detection cache: stores results per item GUID so switching items doesn't lose data
+local detection_cache = {}  -- keyed by item GUID
+
 -- Application state
 local state = {
     -- Connection
@@ -77,6 +80,7 @@ local state = {
     -- Item info
     item = nil,
     take = nil,
+    item_guid = nil,
     item_name = "",
     item_duration = 0,
     audio_path = "",
@@ -101,11 +105,51 @@ local state = {
     action_mode = 1,         -- 1=Tempo Map, 2=Stretch Markers, 3=Match Tempo
     tempo_mode = 1,          -- 1=Constant, 2=Variable (per bar)
     marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
+    quantize_to_grid = false, -- Snap stretch markers to REAPER grid
     target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
     status_message = "",
     status_color = nil,
     last_apply_count = 0,
 }
+
+-- Save current detection to cache
+local function save_to_cache()
+    if not state.item_guid or not state.detected then return end
+    detection_cache[state.item_guid] = {
+        beats = state.beats,
+        downbeats = state.downbeats,
+        tempo = state.tempo,
+        time_sig_num = state.time_sig_num,
+        time_sig_denom = state.time_sig_denom,
+        confidence = state.confidence,
+        backend = state.backend,
+        detection_time = state.detection_time,
+        audio_duration = state.audio_duration,
+    }
+end
+
+-- Restore detection from cache (returns true if found)
+local function restore_from_cache(guid)
+    local cached = detection_cache[guid]
+    if not cached then return false end
+    state.beats = cached.beats
+    state.downbeats = cached.downbeats
+    state.tempo = cached.tempo
+    state.time_sig_num = cached.time_sig_num
+    state.time_sig_denom = cached.time_sig_denom
+    state.confidence = cached.confidence
+    state.backend = cached.backend
+    state.detection_time = cached.detection_time
+    state.audio_duration = cached.audio_duration
+    state.detected = true
+    state.detect_progress = 1.0
+    state.detect_message = ""
+    state.status_message = string.format(
+        "%d beats, %.1f BPM (cached)",
+        #state.beats, state.tempo)
+    state.status_color = "success"
+    return true
+end
 
 -- Get stable item identifier (survives re-selection)
 local function get_item_guid(item)
@@ -130,7 +174,6 @@ local function update_selected_item()
     local item = reaper.GetSelectedMediaItem(0, 0)
     if not item then
         -- No selection — keep data, just update item reference to nil
-        -- DON'T clear detection results (user just clicked empty space)
         state.item = nil
         state.take = nil
         return
@@ -139,21 +182,28 @@ local function update_selected_item()
     -- Check if it's the same item we already analyzed
     local guid = get_item_guid(item)
     if guid == state.item_guid then
-        -- Same item — just refresh the pointer (may have changed)
+        -- Same item — just refresh the pointer
         state.item = item
         state.take = reaper.GetActiveTake(item)
         return
     end
 
-    -- Different item — reset detection
+    -- Different item — save current detection to cache before switching
+    save_to_cache()
+
+    -- Switch to new item
     state.item = item
     state.item_guid = guid
     state.take = reaper.GetActiveTake(item)
-    state.detected = false
-    state.beats = nil
-    state.peaks = nil
-    state.detect_progress = 0
-    state.detect_message = ""
+
+    -- Try to restore from cache (previous detection for this item)
+    if not restore_from_cache(guid) then
+        -- No cache — reset detection state
+        state.detected = false
+        state.beats = nil
+        state.detect_progress = 0
+        state.detect_message = ""
+    end
 
     if state.take and not reaper.TakeIsMIDI(state.take) then
         local source = reaper.GetMediaItemTake_Source(state.take)
@@ -295,6 +345,8 @@ local function poll_responses()
             "%d beats, %.1f BPM (%s, %.1fs)",
             #state.beats, state.tempo, state.backend, state.detection_time)
         state.status_color = "success"
+        -- Cache detection for this item
+        save_to_cache()
     elseif msg.status == "error" then
         state.detecting = false
         state.status_message = msg.message or "Detection failed"
@@ -321,7 +373,7 @@ local function apply_action()
         -- Stretch Markers
         local use_downbeats = state.marker_mode == 2
         local beat_list = use_downbeats and state.downbeats or state.beats
-        count = actions.insert_stretch_markers(state.take, beat_list, state.item)
+        count = actions.insert_stretch_markers(state.take, beat_list, state.item, state.quantize_to_grid)
         if count > 0 then
             state.status_message = string.format("%d stretch markers inserted", count)
             state.status_color = "success"

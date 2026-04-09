@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.0 (2026-04-09)
+
+Feature update based on community feedback (Hipox).
+
+### New Features
+- **Snap first beat to bar** - tempo map automatically aligns first detected beat to nearest REAPER grid division. No more floating tempo maps starting at random positions.
+- **Quantize stretch markers to grid** - new checkbox option. After inserting stretch markers, each one is snapped to REAPER's grid for tight timing alignment.
+- **Multi-item detection cache** - switching between items preserves detection results. Come back to a previously analyzed item and your beats/tempo/downbeats are instantly restored (shows "cached" in status). Cache clears when the script exits.
+
 ## v1.0.1 (2026-04-09)
 
 Hotfix for Windows.

@@ -1,5 +1,26 @@
 # Changelog
 
+## v1.2.0 (2026-04-09)
+
+Precision and quality update based on deep analysis of beat-this internals and community feedback (dukati, Bassman002, JetRed).
+
+### Precision Improvements
+- **Improved tempo accuracy** — hybrid span/mean calculation instead of median. Eliminates systematic error from beat-this 20ms frame quantization (e.g. 100 BPM → 101.8 BPM for a true 102 BPM track)
+- **Neural downbeats** — uses beat-this's dedicated downbeat detection head instead of naive every-4th-beat. Correctly identifies bar boundaries even when audio doesn't start on beat 1
+- **Fixed stretch marker quantization** — uses TimeMap2 instead of BR_GetClosestGridDivision. Markers now snap to nearest beat regardless of REAPER grid setting (was causing 0.52x stretch ratios)
+
+### New Features
+- **Editable BPM** — click detected tempo to override manually. Shows "(was X)" when edited. Useful when detection is close but not exact
+- **Auto-align to bar** — Match Tempo automatically shifts item so first downbeat lands on nearest bar line. No more manual alignment (on by default)
+- **Stretch quality mode** — choose Balanced, Transient, or Tonal algorithm for stretch markers via dropdown. Transient best for drums, Tonal for vocals/melodic
+
+### Fixes
+- **Windows server launch** — fixed nested cmd quotes that prevented server startup when scripts installed via installer (reported by Bassman002)
+- **Tooltip** — corrected "madmom > librosa fallback" to accurately reflect beat-this as sole backend
+
+### Tests
+- 22 → 26 tests (quantized tempo, neural downbeats 4/4/3/4/empty)
+
 ## v1.1.0 (2026-04-09)
 
 Feature update based on community feedback (Hipox).

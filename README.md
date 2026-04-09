@@ -9,11 +9,13 @@ REABeat detects beats, downbeats, tempo, and time signature in any audio using [
 - **Detect beats** — state-of-the-art neural beat tracking, ~2-3 seconds per song
 - **Insert tempo map** — constant BPM or variable per-bar tempo markers
 - **Insert stretch markers** — at every beat or every downbeat
+- **Match tempo** — adjust item playrate to any target BPM (pitch preserved)
 - **Cross-platform** — macOS, Windows, Linux
 
 ## Use Cases
 
 - **Tempo-map a live recording** — align REAPER's grid to freely played audio
+- **Match a song to your session** — detect BPM, one click to match project tempo
 - **Quantize timing** — insert stretch markers, then fine-tune in REAPER
 - **Sync to picture** — create accurate tempo map for scoring workflows
 - **Prep for editing** — know the BPM and bar structure before you start cutting
@@ -121,8 +123,11 @@ Recommended: also install [SWS Extension](https://www.sws-extension.org/) (enabl
 1. Select an audio item on your REAPER timeline
 2. Run REABeat from the Actions menu (or press your shortcut)
 3. Click **Detect Beats**
-4. Choose your action (Tempo Map or Stretch Markers)
-5. Click **Apply**
+4. Choose your action:
+   - **Insert Tempo Map** — constant or variable per-bar
+   - **Insert Stretch Markers** — every beat or downbeats only
+   - **Match Tempo** — adjust playrate to project BPM or custom target
+5. Click **Apply** (Ctrl+Z to undo)
 
 The Python backend launches automatically on first use and shuts down after 5 minutes of inactivity.
 

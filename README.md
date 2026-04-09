@@ -123,6 +123,10 @@ Recommended: also install [SWS Extension](https://www.sws-extension.org/) (enabl
      - **macOS:** `~/Library/Application Support/REAPER/Scripts/ReaBeat/reabeat.lua`
      - **Windows:** `%APPDATA%\REAPER\Scripts\ReaBeat\reabeat.lua`
      - **Linux:** `~/.config/REAPER/Scripts/ReaBeat/reabeat.lua`
+   - **REAPER Portable / custom location:** copy scripts manually, then load from there:
+     ```
+     copy scripts\reaper\*.lua "X:\YourPortableREAPER\Scripts\ReaBeat\"
+     ```
 4. Click **OK**
 5. (Optional) Select the new action and click **Add shortcut...** to assign a key
 

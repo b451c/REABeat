@@ -119,4 +119,59 @@ function actions.insert_stretch_markers(take, beat_times, item)
     return count
 end
 
+--- Get current project BPM.
+-- @return number BPM
+function actions.get_project_bpm()
+    local bpm, bpi = reaper.GetProjectTimeSignature2(0)
+    return bpm
+end
+
+--- Match item tempo to target BPM by adjusting playrate.
+-- Preserves pitch using REAPER's élastique engine.
+-- @param take Media item take
+-- @param item Media item
+-- @param detected_bpm Detected source BPM
+-- @param target_bpm Target BPM to match
+-- @return boolean success
+function actions.match_tempo(take, item, detected_bpm, target_bpm)
+    if not take or not item then return false end
+    if detected_bpm <= 0 or target_bpm <= 0 then return false end
+
+    local rate = target_bpm / detected_bpm
+
+    -- Sanity check: don't allow extreme rates (0.25x to 4x)
+    if rate < 0.25 or rate > 4.0 then
+        reaper.ShowMessageBox(
+            string.format(
+                "Tempo ratio too extreme: %.1f BPM -> %.1f BPM (%.1fx)\n\n" ..
+                "Supported range: 0.25x to 4.0x",
+                detected_bpm, target_bpm, rate),
+            "REABeat — Match Tempo", 0)
+        return false
+    end
+
+    reaper.Undo_BeginBlock()
+    reaper.PreventUIRefresh(1)
+
+    -- Set playrate and preserve pitch
+    reaper.SetMediaItemTakeInfo_Value(take, "D_PLAYRATE", rate)
+    reaper.SetMediaItemTakeInfo_Value(take, "B_PPITCH", 1)  -- preserve pitch ON
+
+    -- Adjust item length to match new rate
+    local source = reaper.GetMediaItemTake_Source(take)
+    if source then
+        local source_len = reaper.GetMediaSourceLength(source)
+        local offset = reaper.GetMediaItemTakeInfo_Value(take, "D_STARTOFFS")
+        local new_len = (source_len - offset) / rate
+        reaper.SetMediaItemInfo_Value(item, "D_LENGTH", new_len)
+    end
+
+    reaper.UpdateItemInProject(item)
+    reaper.PreventUIRefresh(-1)
+    reaper.Undo_EndBlock(
+        string.format("REABeat: Match tempo %.1f -> %.1f BPM", detected_bpm, target_bpm), -1)
+
+    return true
+end
+
 return actions

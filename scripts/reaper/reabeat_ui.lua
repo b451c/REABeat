@@ -261,6 +261,51 @@ function draw_actions(ctx, ImGui, C, state, w)
         end
         ImGui.Unindent(ctx, 20)
     end
+
+    ImGui.Spacing(ctx)
+
+    -- Radio: Match Tempo
+    if ImGui.RadioButton(ctx, "Match Tempo", state.action_mode == 3) then
+        state.action_mode = 3
+    end
+    if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+        ImGui.SetTooltip(ctx, "Change item playback rate to match a target BPM.\nPitch is preserved (elastique). Original file unchanged.")
+    end
+
+    if state.action_mode == 3 then
+        ImGui.Indent(ctx, 20)
+
+        -- "Match to project" button
+        local project_bpm = callbacks.get_project_bpm and callbacks.get_project_bpm() or 120
+        local n_btn = theme.push_button(ctx, ImGui, C, "detect")
+        if ImGui.Button(ctx, string.format("Match to project (%.1f BPM)", project_bpm), 0, 24) then
+            state.target_bpm = project_bpm
+        end
+        ImGui.PopStyleColor(ctx, n_btn)
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "Set target BPM to current REAPER project tempo.")
+        end
+
+        -- Custom BPM input
+        ImGui.Text(ctx, "Target BPM:")
+        ImGui.SameLine(ctx)
+        ImGui.SetNextItemWidth(ctx, 80)
+        local changed, new_val = ImGui.InputDouble(ctx, "##target_bpm", state.target_bpm or project_bpm, 0, 0, "%.1f")
+        if changed then
+            state.target_bpm = new_val
+        end
+
+        -- Show what will happen
+        if state.target_bpm and state.tempo > 0 then
+            local rate = state.target_bpm / state.tempo
+            ImGui.PushStyleColor(ctx, C("Col_Text"), c.text_dim)
+            ImGui.Text(ctx, string.format("%.1f BPM -> %.1f BPM (%.2fx speed, pitch preserved)",
+                state.tempo, state.target_bpm, rate))
+            ImGui.PopStyleColor(ctx, 1)
+        end
+
+        ImGui.Unindent(ctx, 20)
+    end
 end
 
 function draw_apply(ctx, ImGui, C, state, w, callbacks)

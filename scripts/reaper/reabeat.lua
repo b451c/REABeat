@@ -94,9 +94,10 @@ local state = {
     audio_duration = 0,
 
     -- UI
-    action_mode = 1,         -- 1=Tempo Map, 2=Stretch Markers
+    action_mode = 1,         -- 1=Tempo Map, 2=Stretch Markers, 3=Match Tempo
     tempo_mode = 1,          -- 1=Constant, 2=Variable (per bar)
     marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
+    target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
     status_message = "",
     status_color = nil,
     last_apply_count = 0,
@@ -308,15 +309,33 @@ local function apply_action()
             state.beats, state.downbeats, state.tempo,
             state.time_sig_num, state.time_sig_denom,
             state.item, state.tempo_mode == 2)
-        state.status_message = string.format("%d tempo markers inserted", count)
-    else
+        if count > 0 then
+            state.status_message = string.format("%d tempo markers inserted", count)
+            state.status_color = "success"
+        end
+    elseif state.action_mode == 2 then
         -- Stretch Markers
         local use_downbeats = state.marker_mode == 2
         local beat_list = use_downbeats and state.downbeats or state.beats
         count = actions.insert_stretch_markers(state.take, beat_list, state.item)
-        state.status_message = string.format("%d stretch markers inserted", count)
+        if count > 0 then
+            state.status_message = string.format("%d stretch markers inserted", count)
+            state.status_color = "success"
+        end
+    elseif state.action_mode == 3 then
+        -- Match Tempo
+        local target = state.target_bpm or actions.get_project_bpm()
+        if target and target > 0 and state.tempo > 0 then
+            local ok = actions.match_tempo(state.take, state.item, state.tempo, target)
+            if ok then
+                state.status_message = string.format("Tempo matched: %.1f -> %.1f BPM", state.tempo, target)
+                state.status_color = "success"
+            end
+        else
+            state.status_message = "Set a target BPM first"
+            state.status_color = "warning"
+        end
     end
-    state.status_color = "success"
     state.last_apply_count = count
 end
 
@@ -352,9 +371,7 @@ local function draw_frame()
             on_detect = start_detection,
             on_apply = apply_action,
             on_connect = try_connect,
-            draw_waveform = function(x, y, w, h)
-                waveform.draw(ctx, ImGui, C, state, x, y, w, h)
-            end,
+            get_project_bpm = actions.get_project_bpm,
         })
         ImGui.End(ctx)
     end

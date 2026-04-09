@@ -10,11 +10,13 @@ ReaBeat detects beats, downbeats, tempo, and time signature in any audio using [
 
 ## What It Does
 
-- **Detect beats** — state-of-the-art neural beat tracking, ~2-3 seconds per song
-- **Insert tempo map** — constant BPM or variable per-bar tempo markers
-- **Insert stretch markers** — at every beat or every downbeat
-- **Match tempo** — adjust item playrate to any target BPM (pitch preserved)
-- **Cross-platform** — macOS, Windows, Linux
+- **Detect beats** - state-of-the-art neural beat tracking, ~2-3 seconds per song
+- **Match tempo** - one click to adjust playrate to project BPM or custom target (pitch preserved)
+- **Insert tempo map** - constant BPM or variable per-bar markers (snaps to grid)
+- **Insert stretch markers** - at every beat or every downbeat
+- **Match & Quantize** - combo: tempo map + quantized stretch markers in one click
+- **Multi-item cache** - switch between items without losing detection results
+- **Cross-platform** - macOS, Windows, Linux
 
 ## Use Cases
 
@@ -128,9 +130,10 @@ Recommended: also install [SWS Extension](https://www.sws-extension.org/) (enabl
 2. Run ReaBeat from the Actions menu (or press your shortcut)
 3. Click **Detect Beats**
 4. Choose your action:
-   - **Insert Tempo Map** — constant or variable per-bar
-   - **Insert Stretch Markers** — every beat or downbeats only
-   - **Match Tempo** — adjust playrate to project BPM or custom target
+   - **Match Tempo** - adjust playrate to project BPM or custom target
+   - **Insert Tempo Map** - constant or variable per-bar (snaps to grid)
+   - **Insert Stretch Markers** - every beat or downbeats only
+   - **Match & Quantize** - tempo map + quantized markers in one click
 5. Click **Apply** (Ctrl+Z to undo)
 
 The Python backend launches automatically on first use and shuts down after 5 minutes of inactivity.

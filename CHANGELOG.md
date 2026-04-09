@@ -5,9 +5,14 @@
 Feature update based on community feedback (Hipox).
 
 ### New Features
-- **Snap first beat to bar** - tempo map automatically aligns first detected beat to nearest REAPER grid division. No more floating tempo maps starting at random positions.
-- **Quantize stretch markers to grid** - new checkbox option. After inserting stretch markers, each one is snapped to REAPER's grid for tight timing alignment.
-- **Multi-item detection cache** - switching between items preserves detection results. Come back to a previously analyzed item and your beats/tempo/downbeats are instantly restored (shows "cached" in status). Cache clears when the script exits.
+- **Match & Quantize mode** - new combo action: inserts variable tempo map first (aligns grid to audio), then inserts stretch markers quantized to that grid. Result: minimal stretching (0.99x-1.01x) instead of drastic corrections.
+- **Snap first beat to bar** - tempo map automatically aligns first detected beat to nearest REAPER grid division (uses BR_GetClosestGridDivision with SnapToGrid fallback). No more floating tempo maps at random positions.
+- **Multi-item detection cache** - switching between items preserves detection results. Come back to a previously analyzed item and beats/tempo/downbeats are instantly restored (shows "cached" in status). Cache clears on script exit.
+
+### UI Improvements
+- **Reordered actions** from simplest to most advanced: Match Tempo > Insert Tempo Map > Insert Stretch Markers > Match & Quantize
+- **Match Tempo is now the default** action (most common use case)
+- Each mode has clear tooltips explaining what it does and when to use it
 
 ## v1.0.1 (2026-04-09)
 

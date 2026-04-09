@@ -99,9 +99,10 @@ Recommended: install [SWS Extension](https://www.sws-extension.org/) (enables Su
 2. Run ReaBeat from Actions menu
 3. Click **Detect Beats** (~2-3 seconds)
 4. Choose action:
-   - **Insert Tempo Map** — align REAPER grid to audio
-   - **Insert Stretch Markers** — for timing quantization
-   - **Match Tempo** — adjust item to project BPM or custom target
+   - **Match Tempo** - adjust item to project BPM or custom target
+   - **Insert Tempo Map** - align REAPER grid to audio
+   - **Insert Stretch Markers** - for manual timing editing
+   - **Match & Quantize** - tempo map + quantized markers in one click
 5. Click **Apply** (Ctrl+Z to undo)
 
 Backend launches automatically. Shuts down after 5 min idle.

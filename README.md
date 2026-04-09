@@ -2,7 +2,11 @@
 
 **Neural beat detection and tempo mapping for REAPER.**
 
-REABeat detects beats, downbeats, tempo, and time signature in any audio using [beat-this](https://github.com/CPJKU/beat_this) (CPJKU, ISMIR 2024), then writes results to REAPER as tempo markers or stretch markers.
+![REABeat in action](screens/Reabeat_in_action.gif)
+
+REABeat detects beats, downbeats, tempo, and time signature in any audio using [beat-this](https://github.com/CPJKU/beat_this) (CPJKU, ISMIR 2024), then writes results to REAPER as tempo markers, stretch markers, or adjusts playrate to match your session tempo.
+
+![REABeat UI](screens/Reabeat.png)
 
 ## What It Does
 

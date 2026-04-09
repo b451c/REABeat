@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.0.1 (2026-04-09)
+
+Hotfix for Windows.
+
+### Fixes
+- **SCRIPT_DIR detection** - pattern now matches Windows backslashes (reported by Hipox)
+- **Project root discovery** - searches `~/ReaBeat/` and `~/Documents/ReaBeat/` when scripts are installed separately from repo
+- **Branding** - unified naming to ReaBeat everywhere (ReaPack convention)
+
 ## v1.0.0 (2026-04-09)
 
 Initial release.

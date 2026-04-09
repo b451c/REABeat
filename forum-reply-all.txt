@@ -1,0 +1,23 @@
+Thanks for the kind words everyone!
+
+[b]Lunar Ladder[/b] - glad you like it!
+
+[b]saxmand[/b] - thanks! The dependency challenge is real - Python backend + torch is a lot to ask users to install manually. That's why I went with uv as the package manager - one curl command handles Python version, virtualenv, and all deps including PyTorch. If you ever need a similar setup for your own projects, feel free to use the install scripts as a template.
+
+[b]X-Raym[/b] - no video yet. Honestly I tried to make the tool self-explanatory enough that a video shouldn't be necessary - select item, click Detect, pick action, click Apply. But I'm curious - what would you want to see in a video? A quick demo of each action, or more of a walkthrough of the installation process? That would help me prioritize.
+
+[b]Hipox[/b] - both Windows issues are fixed and pushed. Details:
+
+[list=1]
+[*][b]SCRIPT_DIR[/b] - pattern was matching forward slashes only, now handles backslashes too. Exactly the fix you posted.
+[*][b]Project root[/b] - the launcher now searches [code]%USERPROFILE%\ReaBeat[/code] and [code]%USERPROFILE%\Documents\ReaBeat[/code] in addition to paths relative to the script.
+[/list]
+
+To update:
+[code]cd %USERPROFILE%\ReaBeat
+git pull[/code]
+
+Then copy the updated scripts:
+[code]copy scripts\reaper\*.lua "%APPDATA%\REAPER\Scripts\ReaBeat\"[/code]
+
+Really appreciate the Windows testing - I don't have a Windows machine so reports like this are gold. Let me know if there's anything else.

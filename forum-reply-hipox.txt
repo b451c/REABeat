@@ -1,0 +1,16 @@
+[b]Hipox[/b] - great catch, thank you! Both issues are now fixed.
+
+[b]Fix 1: SCRIPT_DIR on Windows[/b]
+Exactly your fix - the pattern was matching forward slashes only. Now uses [code][\\/][/code] to handle both separators.
+
+[b]Fix 2: Project root discovery[/b]
+The installer copies scripts to REAPER's Scripts folder, but the Python backend lives in [code]C:\Users\username\ReaBeat\[/code]. The launcher now searches well-known install locations ([code]~/ReaBeat/[/code] and [code]~/Documents/ReaBeat/[/code]) in addition to relative paths.
+
+To update:
+[code]cd %USERPROFILE%\ReaBeat
+git pull[/code]
+
+Then copy the updated Lua scripts to your REAPER Scripts folder:
+[code]copy scripts\reaper\*.lua "%APPDATA%\REAPER\Scripts\ReaBeat\"[/code]
+
+Really appreciate the Windows testing - I don't have a Windows machine to test on, so bug reports like this are invaluable. Let me know if there's anything else!

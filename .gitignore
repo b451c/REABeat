@@ -24,7 +24,10 @@ uv.lock
 
 # Agent / internal
 CLAUDE.md
-forum-post-cockos.txt
+HANDOVER.md
+PROGRESS.md
+forum-*.txt
+forum*.txt
 
 # Logs
 *.log

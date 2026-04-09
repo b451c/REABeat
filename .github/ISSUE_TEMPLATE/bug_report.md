@@ -21,7 +21,7 @@ What should have happened.
 - OS: [e.g. macOS 15.1, Windows 11, Ubuntu 24.04]
 - REAPER version: [e.g. 7.24]
 - ReaImGui version: [e.g. 0.9.3]
-- REABeat version: [e.g. 1.0.0]
+- ReaBeat version: [e.g. 1.0.0]
 
 **Server log** (if applicable):
 ```
@@ -32,6 +32,6 @@ Paste contents of:
 
 **Backend check:**
 ```
-cd REABeat && uv run python -m reabeat check
+cd ReaBeat && uv run python -m reabeat check
 ```
 Paste the output here.

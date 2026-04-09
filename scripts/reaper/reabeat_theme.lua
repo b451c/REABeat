@@ -1,4 +1,4 @@
--- REABeat Theme: REAPER-native dark theme with warm gold accent
+-- ReaBeat Theme: REAPER-native dark theme with warm gold accent
 -- Designed to feel like a built-in REAPER tool, not a foreign plugin.
 
 local theme = {}

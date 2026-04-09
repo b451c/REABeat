@@ -1,20 +1,20 @@
-# REABeat — Installation Guide
+# ReaBeat — Installation Guide
 
 ## Quick Install
 
 ### macOS / Linux
 Open Terminal, paste, press Enter:
 ```bash
-curl -sSL https://raw.githubusercontent.com/b451c/REABeat/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/b451c/ReaBeat/main/install.sh | bash
 ```
 
 ### Windows
 Open PowerShell, paste, press Enter:
 ```powershell
-irm https://raw.githubusercontent.com/b451c/REABeat/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/b451c/ReaBeat/main/install.ps1 | iex
 ```
 
-Both scripts will: install uv (if needed) → download REABeat → install Python dependencies → copy scripts to REAPER.
+Both scripts will: install uv (if needed) → download ReaBeat → install Python dependencies → copy scripts to REAPER.
 
 ---
 
@@ -32,23 +32,23 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-### Step 2: Download REABeat
+### Step 2: Download ReaBeat
 
 **macOS / Linux:**
 ```bash
 cd ~/Documents
-git clone https://github.com/b451c/REABeat.git
-cd REABeat
+git clone https://github.com/b451c/ReaBeat.git
+cd ReaBeat
 ```
 
 **Windows:**
 ```powershell
 cd $env:USERPROFILE\Documents
-git clone https://github.com/b451c/REABeat.git
-cd REABeat
+git clone https://github.com/b451c/ReaBeat.git
+cd ReaBeat
 ```
 
-No git? Download ZIP: https://github.com/b451c/REABeat/archive/refs/heads/main.zip
+No git? Download ZIP: https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip
 
 ### Step 3: Install Python dependencies
 
@@ -85,18 +85,18 @@ Recommended: install [SWS Extension](https://www.sws-extension.org/) (enables Su
 2. **New action... > Load ReaScript...**
 3. Select `reabeat.lua`:
    - **Auto-installer path:**
-     - macOS: `~/Library/Application Support/REAPER/Scripts/REABeat/reabeat.lua`
-     - Windows: `%APPDATA%\REAPER\Scripts\REABeat\reabeat.lua`
-     - Linux: `~/.config/REAPER/Scripts/REABeat/reabeat.lua`
+     - macOS: `~/Library/Application Support/REAPER/Scripts/ReaBeat/reabeat.lua`
+     - Windows: `%APPDATA%\REAPER\Scripts\ReaBeat\reabeat.lua`
+     - Linux: `~/.config/REAPER/Scripts/ReaBeat/reabeat.lua`
    - **Manual install path:**
-     - macOS/Linux: `~/Documents/REABeat/scripts/reaper/reabeat.lua`
-     - Windows: `Documents\REABeat\scripts\reaper\reabeat.lua`
+     - macOS/Linux: `~/Documents/ReaBeat/scripts/reaper/reabeat.lua`
+     - Windows: `Documents\ReaBeat\scripts\reaper\reabeat.lua`
 4. (Optional) Assign a keyboard shortcut
 
 ### Step 6: Use
 
 1. Select an audio item on your timeline
-2. Run REABeat from Actions menu
+2. Run ReaBeat from Actions menu
 3. Click **Detect Beats** (~2-3 seconds)
 4. Choose action:
    - **Insert Tempo Map** — align REAPER grid to audio
@@ -112,15 +112,15 @@ Backend launches automatically. Shuts down after 5 min idle.
 
 ### "Starting..." hangs (backend won't start)
 ```bash
-cd ~/Documents/REABeat   # or wherever you installed
+cd ~/Documents/ReaBeat   # or wherever you installed
 uv run python -m reabeat check
 ```
-- `OK: beat-this ready` → backend works, issue is REAPER connection. Try: close REABeat, restart REAPER.
+- `OK: beat-this ready` → backend works, issue is REAPER connection. Try: close ReaBeat, restart REAPER.
 - Error message → follow instructions in the error.
 
 ### "beat-this not installed"
 ```bash
-cd ~/Documents/REABeat
+cd ~/Documents/ReaBeat
 uv sync
 ```
 

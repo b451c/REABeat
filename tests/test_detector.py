@@ -1,4 +1,4 @@
-"""Tests for REABeat beat detector."""
+"""Tests for ReaBeat beat detector."""
 
 import numpy as np
 import pytest

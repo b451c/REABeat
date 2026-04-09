@@ -1,12 +1,12 @@
-# REABeat
+# ReaBeat
 
 **Neural beat detection and tempo mapping for REAPER.**
 
-![REABeat in action](screens/Reabeat_in_action.gif)
+![ReaBeat in action](screens/ReaBeat_in_action.gif)
 
-REABeat detects beats, downbeats, tempo, and time signature in any audio using [beat-this](https://github.com/CPJKU/beat_this) (CPJKU, ISMIR 2024), then writes results to REAPER as tempo markers, stretch markers, or adjusts playrate to match your session tempo.
+ReaBeat detects beats, downbeats, tempo, and time signature in any audio using [beat-this](https://github.com/CPJKU/beat_this) (CPJKU, ISMIR 2024), then writes results to REAPER as tempo markers, stretch markers, or adjusts playrate to match your session tempo.
 
-![REABeat UI](screens/Reabeat.png)
+![ReaBeat UI](screens/ReaBeat.png)
 
 ## What It Does
 
@@ -32,14 +32,14 @@ REABeat detects beats, downbeats, tempo, and time signature in any audio using [
 
 Open Terminal, paste this, press Enter:
 ```bash
-curl -sSL https://raw.githubusercontent.com/b451c/REABeat/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/b451c/ReaBeat/main/install.sh | bash
 ```
 
 ### Quick Install (Windows)
 
 Open PowerShell, paste this, press Enter:
 ```powershell
-irm https://raw.githubusercontent.com/b451c/REABeat/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/b451c/ReaBeat/main/install.ps1 | iex
 ```
 
 ### Step-by-Step Install (all platforms)
@@ -59,23 +59,23 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 irm https://astral.sh/uv/install.ps1 | iex
 ```
 
-#### Step 2: Download REABeat
+#### Step 2: Download ReaBeat
 
 **macOS / Linux:**
 ```bash
 cd ~/Documents
-git clone https://github.com/b451c/REABeat.git
-cd REABeat
+git clone https://github.com/b451c/ReaBeat.git
+cd ReaBeat
 ```
 
 **Windows (PowerShell):**
 ```powershell
 cd $env:USERPROFILE\Documents
-git clone https://github.com/b451c/REABeat.git
-cd REABeat
+git clone https://github.com/b451c/ReaBeat.git
+cd ReaBeat
 ```
 
-> Don't have git? Download ZIP: https://github.com/b451c/REABeat/archive/refs/heads/main.zip
+> Don't have git? Download ZIP: https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip
 
 #### Step 3: Install Python dependencies
 
@@ -108,24 +108,24 @@ Open REAPER, then:
 
 Recommended: also install [SWS Extension](https://www.sws-extension.org/) (enables URL opening from Support menu).
 
-#### Step 5: Add REABeat script to REAPER
+#### Step 5: Add ReaBeat script to REAPER
 
 1. **Actions > Show action list**
 2. Click **New action... > Load ReaScript...**
 3. Navigate to the `reabeat.lua` file:
-   - **macOS / Linux:** `~/Documents/REABeat/scripts/reaper/reabeat.lua`
-   - **Windows:** `Documents\REABeat\scripts\reaper\reabeat.lua`
+   - **macOS / Linux:** `~/Documents/ReaBeat/scripts/reaper/reabeat.lua`
+   - **Windows:** `Documents\ReaBeat\scripts\reaper\reabeat.lua`
    - If you used the auto-installer, scripts are already in REAPER's Scripts folder:
-     - **macOS:** `~/Library/Application Support/REAPER/Scripts/REABeat/reabeat.lua`
-     - **Windows:** `%APPDATA%\REAPER\Scripts\REABeat\reabeat.lua`
-     - **Linux:** `~/.config/REAPER/Scripts/REABeat/reabeat.lua`
+     - **macOS:** `~/Library/Application Support/REAPER/Scripts/ReaBeat/reabeat.lua`
+     - **Windows:** `%APPDATA%\REAPER\Scripts\ReaBeat\reabeat.lua`
+     - **Linux:** `~/.config/REAPER/Scripts/ReaBeat/reabeat.lua`
 4. Click **OK**
 5. (Optional) Select the new action and click **Add shortcut...** to assign a key
 
 #### Step 6: Run
 
 1. Select an audio item on your REAPER timeline
-2. Run REABeat from the Actions menu (or press your shortcut)
+2. Run ReaBeat from the Actions menu (or press your shortcut)
 3. Click **Detect Beats**
 4. Choose your action:
    - **Insert Tempo Map** — constant or variable per-bar
@@ -142,12 +142,12 @@ The Python backend launches automatically on first use and shuts down after 5 mi
 ## Updating
 
 ```bash
-cd ~/Documents/REABeat    # or wherever you cloned it
+cd ~/Documents/ReaBeat    # or wherever you cloned it
 git pull
 uv sync
 ```
 
-Then restart REABeat in REAPER (close and reopen the script window).
+Then restart ReaBeat in REAPER (close and reopen the script window).
 
 ---
 
@@ -157,7 +157,7 @@ Then restart REABeat in REAPER (close and reopen the script window).
 |---------|----------|
 | "Starting..." hangs | Run `uv run python -m reabeat check` in terminal to verify backend |
 | "Offline" status | Kill old server: `kill $(lsof -ti:9877)` (macOS/Linux) or restart REAPER |
-| "beat-this not installed" | Run `uv sync` in the REABeat directory |
+| "beat-this not installed" | Run `uv sync` in the ReaBeat directory |
 | ReaImGui error | Install via ReaPack: Extensions > ReaPack > Browse > "ReaImGui" |
 | Socket error | Install via ReaPack: Extensions > ReaPack > Browse > "mavriq-lua-sockets" |
 | Wrong BPM detected | Try a different section of the song (beat-this works best with clear rhythmic content) |
@@ -181,7 +181,7 @@ All processing is **local** — no cloud, no data sent anywhere.
 
 ## Support Development
 
-REABeat is free and open source (MIT license).
+ReaBeat is free and open source (MIT license).
 
 If it saves you time, consider supporting:
 

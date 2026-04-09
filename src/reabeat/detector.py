@@ -42,7 +42,7 @@ def check_backend() -> Tuple[bool, str]:
         return False, (
             "PyTorch is not installed.\n\n"
             "Install with:\n"
-            "  cd REABeat && uv sync --extra neural\n\n"
+            "  cd ReaBeat && uv sync --extra neural\n\n"
             "Or:\n"
             "  pip install torch torchaudio"
         )
@@ -52,7 +52,7 @@ def check_backend() -> Tuple[bool, str]:
         return False, (
             "beat-this is not installed.\n\n"
             "Install with:\n"
-            "  cd REABeat && uv sync --extra neural\n\n"
+            "  cd ReaBeat && uv sync --extra neural\n\n"
             "Or:\n"
             "  pip install git+https://github.com/CPJKU/beat_this.git"
         )

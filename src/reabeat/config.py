@@ -1,4 +1,4 @@
-"""Configuration constants for REABeat."""
+"""Configuration constants for ReaBeat."""
 
 from dataclasses import dataclass
 

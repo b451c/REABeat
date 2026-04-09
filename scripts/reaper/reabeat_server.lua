@@ -1,4 +1,4 @@
--- REABeat Server Launcher: auto-launch Python backend
+-- ReaBeat Server Launcher: auto-launch Python backend
 -- Cross-platform: macOS, Windows, Linux
 
 local server = {}
@@ -199,15 +199,15 @@ function server.launch()
         state.launch_error = "Python not found. Install uv: https://docs.astral.sh/uv/"
         state.launch_attempted = true
         reaper.ShowMessageBox(
-            "REABeat requires Python 3.10+ with the reabeat package.\n\n" ..
+            "ReaBeat requires Python 3.10+ with the reabeat package.\n\n" ..
             "Recommended install:\n\n" ..
             (IS_WIN
                 and '  powershell -c "irm https://astral.sh/uv/install.ps1 | iex"\n'
                 or  '  curl -LsSf https://astral.sh/uv/install.sh | sh\n') ..
             "\nThen:\n" ..
-            "  cd " .. (state.project_root or "REABeat") .. "\n" ..
+            "  cd " .. (state.project_root or "ReaBeat") .. "\n" ..
             "  uv sync",
-            "REABeat — Python Not Found", 0)
+            "ReaBeat — Python Not Found", 0)
         return "error"
     end
 

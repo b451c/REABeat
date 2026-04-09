@@ -1,16 +1,16 @@
 #!/bin/bash
-# REABeat Installer for macOS / Linux
-# One command: curl -sSL https://raw.githubusercontent.com/USER/REABeat/main/install.sh | bash
+# ReaBeat Installer for macOS / Linux
+# One command: curl -sSL https://raw.githubusercontent.com/USER/ReaBeat/main/install.sh | bash
 
 set -e
 
-REPO_URL="https://github.com/b451c/REABeat.git"
-INSTALL_DIR="$HOME/REABeat"
+REPO_URL="https://github.com/b451c/ReaBeat.git"
+INSTALL_DIR="$HOME/ReaBeat"
 REAPER_SCRIPTS=""
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
-echo "  ║     REABeat Installer                ║"
+echo "  ║     ReaBeat Installer                ║"
 echo "  ║     Neural beat detection for REAPER ║"
 echo "  ╚══════════════════════════════════════╝"
 echo ""
@@ -58,7 +58,7 @@ fi
 
 # Step 2: Clone or update repo
 echo ""
-echo "  [2/4] Getting REABeat..."
+echo "  [2/4] Getting ReaBeat..."
 if [ -d "$INSTALL_DIR" ]; then
     echo "         Updating existing installation..."
     cd "$INSTALL_DIR"
@@ -84,11 +84,11 @@ echo ""
 # Step 4: Link Lua scripts to REAPER
 echo ""
 echo "  [4/4] Installing REAPER scripts..."
-mkdir -p "$REAPER_SCRIPTS/REABeat"
+mkdir -p "$REAPER_SCRIPTS/ReaBeat"
 
 # Copy (not symlink — more reliable across volumes)
-cp "$INSTALL_DIR/scripts/reaper/"*.lua "$REAPER_SCRIPTS/REABeat/"
-echo "         Copied to: $REAPER_SCRIPTS/REABeat/"
+cp "$INSTALL_DIR/scripts/reaper/"*.lua "$REAPER_SCRIPTS/ReaBeat/"
+echo "         Copied to: $REAPER_SCRIPTS/ReaBeat/"
 
 echo ""
 echo "  ╔══════════════════════════════════════════════════════╗"
@@ -97,8 +97,8 @@ echo "  ║                                                      ║"
 echo "  ║  Next steps in REAPER:                               ║"
 echo "  ║  1. Install ReaImGui & mavriq-lua-sockets via ReaPack║"
 echo "  ║  2. Actions > New action > Load ReaScript            ║"
-echo "  ║     Select: $REAPER_SCRIPTS/REABeat/reabeat.lua"
-echo "  ║  3. Select an audio item and run REABeat             ║"
+echo "  ║     Select: $REAPER_SCRIPTS/ReaBeat/reabeat.lua"
+echo "  ║  3. Select an audio item and run ReaBeat             ║"
 echo "  ║                                                      ║"
 echo "  ║  ReaPack repo for sockets:                           ║"
 echo "  ║  https://github.com/mavriq-dev/public-reascripts/    ║"

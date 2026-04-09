@@ -1,4 +1,4 @@
-"""CLI entry point for REABeat."""
+"""CLI entry point for ReaBeat."""
 
 import logging
 
@@ -10,7 +10,7 @@ from reabeat import __version__
 @click.group()
 @click.version_option(__version__)
 def main() -> None:
-    """REABeat — Neural beat detection and tempo mapping for REAPER."""
+    """ReaBeat — Neural beat detection and tempo mapping for REAPER."""
 
 
 @main.command()
@@ -18,7 +18,7 @@ def main() -> None:
 @click.option("--idle-timeout", default=300, help="Seconds before auto-shutdown (default: 300)")
 @click.option("--verbose", is_flag=True, help="Enable debug logging")
 def serve(port: int, idle_timeout: int, verbose: bool) -> None:
-    """Start the REABeat analysis server."""
+    """Start the ReaBeat analysis server."""
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(
         level=level,
@@ -34,8 +34,8 @@ def serve(port: int, idle_timeout: int, verbose: bool) -> None:
 
     click.echo(f"Backend: {msg}")
 
-    from reabeat.server import REABeatServer
-    server = REABeatServer(port=port, idle_timeout=idle_timeout)
+    from reabeat.server import ReaBeatServer
+    server = ReaBeatServer(port=port, idle_timeout=idle_timeout)
     server.serve()
 
 

@@ -1,4 +1,4 @@
--- REABeat Socket Client: TCP communication with Python backend
+-- ReaBeat Socket Client: TCP communication with Python backend
 -- Line-delimited JSON on localhost:9877
 
 local socket_client = {}

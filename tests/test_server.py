@@ -1,4 +1,4 @@
-"""Tests for REABeat server protocol."""
+"""Tests for ReaBeat server protocol."""
 
 import json
 import socket
@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from reabeat.server import REABeatServer
+from reabeat.server import ReaBeatServer
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def server_port():
 @pytest.fixture
 def running_server(server_port):
     """Start a server in a background thread."""
-    srv = REABeatServer(port=server_port, idle_timeout=30)
+    srv = ReaBeatServer(port=server_port, idle_timeout=30)
     thread = threading.Thread(target=srv.serve, daemon=True)
     thread.start()
     time.sleep(0.3)  # Give server time to bind

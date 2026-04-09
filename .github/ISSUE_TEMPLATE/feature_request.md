@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for REABeat
+about: Suggest an idea for ReaBeat
 title: ''
 labels: enhancement
 assignees: ''

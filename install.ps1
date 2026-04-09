@@ -1,16 +1,16 @@
-# REABeat Installer for Windows
+# ReaBeat Installer for Windows
 # Run: powershell -ExecutionPolicy Bypass -File install.ps1
-# Or:  irm https://raw.githubusercontent.com/USER/REABeat/main/install.ps1 | iex
+# Or:  irm https://raw.githubusercontent.com/USER/ReaBeat/main/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
-$REPO_URL = "https://github.com/b451c/REABeat.git"
-$INSTALL_DIR = "$env:USERPROFILE\REABeat"
+$REPO_URL = "https://github.com/b451c/ReaBeat.git"
+$INSTALL_DIR = "$env:USERPROFILE\ReaBeat"
 $REAPER_SCRIPTS = "$env:APPDATA\REAPER\Scripts"
 
 Write-Host ""
 Write-Host "  +======================================+" -ForegroundColor Cyan
-Write-Host "  |     REABeat Installer                |" -ForegroundColor Cyan
+Write-Host "  |     ReaBeat Installer                |" -ForegroundColor Cyan
 Write-Host "  |     Neural beat detection for REAPER |" -ForegroundColor Cyan
 Write-Host "  +======================================+" -ForegroundColor Cyan
 Write-Host ""
@@ -38,7 +38,7 @@ if ($uvPath) {
 
 # Step 2: Clone or update repo
 Write-Host ""
-Write-Host "  [2/4] Getting REABeat..." -ForegroundColor Yellow
+Write-Host "  [2/4] Getting ReaBeat..." -ForegroundColor Yellow
 if (Test-Path $INSTALL_DIR) {
     Write-Host "         Updating existing installation..."
     Push-Location $INSTALL_DIR
@@ -65,7 +65,7 @@ Write-Host ""
 # Step 4: Copy Lua scripts to REAPER
 Write-Host ""
 Write-Host "  [4/4] Installing REAPER scripts..." -ForegroundColor Yellow
-$reaperDir = "$REAPER_SCRIPTS\REABeat"
+$reaperDir = "$REAPER_SCRIPTS\ReaBeat"
 if (-not (Test-Path $reaperDir)) {
     New-Item -ItemType Directory -Path $reaperDir -Force | Out-Null
 }
@@ -82,7 +82,7 @@ Write-Host "  |  Next steps in REAPER:                                 |" -Foreg
 Write-Host "  |  1. Install ReaImGui & mavriq-lua-sockets via ReaPack  |" -ForegroundColor Green
 Write-Host "  |  2. Actions > New action > Load ReaScript              |" -ForegroundColor Green
 Write-Host "  |     Select: $reaperDir\reabeat.lua" -ForegroundColor Green
-Write-Host "  |  3. Select an audio item and run REABeat               |" -ForegroundColor Green
+Write-Host "  |  3. Select an audio item and run ReaBeat               |" -ForegroundColor Green
 Write-Host "  |                                                        |" -ForegroundColor Green
 Write-Host "  |  ReaPack repo for sockets:                             |" -ForegroundColor Green
 Write-Host "  |  https://github.com/mavriq-dev/public-reascripts/      |" -ForegroundColor Green

@@ -1,4 +1,4 @@
-"""TCP server for REABeat — handles beat detection requests from Lua.
+"""TCP server for ReaBeat — handles beat detection requests from Lua.
 
 Protocol: line-delimited JSON on localhost.
 Commands: detect, ping, shutdown.
@@ -19,7 +19,7 @@ from reabeat.detector import check_backend, detect_beats
 logger = logging.getLogger("reabeat.server")
 
 
-class REABeatServer:
+class ReaBeatServer:
     """Single-threaded TCP server for beat detection."""
 
     def __init__(self, port: int = DEFAULT_PORT, idle_timeout: int = 300):
@@ -38,7 +38,7 @@ class REABeatServer:
         srv.bind(("127.0.0.1", self.port))
         srv.listen(4)
 
-        logger.info("REABeat server listening on port %d", self.port)
+        logger.info("ReaBeat server listening on port %d", self.port)
 
         # Idle timeout watchdog
         watchdog = threading.Thread(target=self._idle_watchdog, daemon=True)
@@ -57,7 +57,7 @@ class REABeatServer:
                 break
 
         srv.close()
-        logger.info("REABeat server stopped.")
+        logger.info("ReaBeat server stopped.")
 
     def _touch(self) -> None:
         with self._lock:

@@ -1,10 +1,10 @@
--- REABeat: Neural beat detection and tempo mapping for REAPER
+-- ReaBeat: Neural beat detection and tempo mapping for REAPER
 -- Entry point — run from Actions menu
 --
 -- Dependencies:
 --   - ReaImGui 0.9+ (install via ReaPack)
 --   - mavriq-lua-sockets (install via ReaPack)
---   - REABeat Python backend (auto-launched)
+--   - ReaBeat Python backend (auto-launched)
 
 local SCRIPT_DIR = debug.getinfo(1, "S").source:match("@?(.*/)") or ""
 
@@ -34,10 +34,10 @@ end
 
 if not load_imgui() then
     reaper.ShowMessageBox(
-        "REABeat requires ReaImGui 0.9+.\n\n" ..
+        "ReaBeat requires ReaImGui 0.9+.\n\n" ..
         "Install via:\n" ..
         "   Extensions > ReaPack > Browse packages > ReaImGui",
-        "REABeat — Missing Dependency", 0)
+        "ReaBeat — Missing Dependency", 0)
     return
 end
 
@@ -268,7 +268,7 @@ local function poll_responses()
                 state.status_color = "error"
                 reaper.ShowMessageBox(
                     r.backend_msg or "beat-this is not installed.",
-                    "REABeat — Backend Not Ready", 0)
+                    "ReaBeat — Backend Not Ready", 0)
             end
             return
         end
@@ -341,7 +341,7 @@ end
 -- Keyboard shortcuts
 local function handle_keys(ctx)
     if ImGui.IsKeyPressed(ctx, C("Key_Escape")) then
-        -- Nothing to cancel in REABeat
+        -- Nothing to cancel in ReaBeat
     end
     if ImGui.IsKeyPressed(ctx, C("Key_Enter")) and state.detected then
         apply_action()
@@ -363,7 +363,7 @@ local function draw_frame()
 
     local theme_colors, theme_vars = theme.push(ctx, ImGui, C)
 
-    local visible, open = ImGui.Begin(ctx, "REABeat", true, WINDOW_FLAGS)
+    local visible, open = ImGui.Begin(ctx, "ReaBeat", true, WINDOW_FLAGS)
     if visible then
         handle_keys(ctx)
         ui.draw(ctx, ImGui, C, state, {
@@ -384,9 +384,9 @@ end
 -- Init
 local function init()
     local config_flags = C("ConfigFlags_DockingEnable")
-    ctx = ImGui.CreateContext("REABeat", config_flags)
+    ctx = ImGui.CreateContext("ReaBeat", config_flags)
     if not ctx then
-        reaper.ShowMessageBox("Failed to create ImGui context", "REABeat", 0)
+        reaper.ShowMessageBox("Failed to create ImGui context", "ReaBeat", 0)
         return false
     end
     try_connect()

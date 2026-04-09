@@ -1,4 +1,4 @@
--- REABeat Actions: REAPER API calls for tempo map and stretch markers
+-- ReaBeat Actions: REAPER API calls for tempo map and stretch markers
 -- All actions wrapped in undo blocks. Warns before destructive operations.
 
 local actions = {}
@@ -14,10 +14,10 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
         local ok = reaper.ShowMessageBox(
             string.format(
                 "Project has %d existing tempo markers.\n\n" ..
-                "REABeat will ADD new markers (existing ones stay).\n" ..
+                "ReaBeat will ADD new markers (existing ones stay).\n" ..
                 "Use Ctrl+Z to undo if needed.\n\nContinue?",
                 existing),
-            "REABeat — Tempo Map", 1)
+            "ReaBeat — Tempo Map", 1)
         if ok ~= 1 then return 0 end
     end
 
@@ -67,8 +67,8 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
     reaper.PreventUIRefresh(-1)
 
     local label = variable
-        and string.format("REABeat: Insert variable tempo map (%d markers)", count)
-        or string.format("REABeat: Insert constant tempo (%.1f BPM)", tempo)
+        and string.format("ReaBeat: Insert variable tempo map (%d markers)", count)
+        or string.format("ReaBeat: Insert constant tempo (%.1f BPM)", tempo)
     reaper.Undo_EndBlock(label, -1)
 
     return count
@@ -85,10 +85,10 @@ function actions.insert_stretch_markers(take, beat_times, item)
         local ok = reaper.ShowMessageBox(
             string.format(
                 "Item has %d existing stretch markers.\n\n" ..
-                "REABeat will REPLACE them with %d new markers.\n" ..
+                "ReaBeat will REPLACE them with %d new markers.\n" ..
                 "Use Ctrl+Z to undo if needed.\n\nContinue?",
                 existing, #beat_times),
-            "REABeat — Stretch Markers", 1)
+            "ReaBeat — Stretch Markers", 1)
         if ok ~= 1 then return 0 end
     end
 
@@ -114,7 +114,7 @@ function actions.insert_stretch_markers(take, beat_times, item)
     reaper.UpdateItemInProject(item)
     reaper.PreventUIRefresh(-1)
     reaper.Undo_EndBlock(
-        string.format("REABeat: Insert %d stretch markers", count), -1)
+        string.format("ReaBeat: Insert %d stretch markers", count), -1)
 
     return count
 end
@@ -146,7 +146,7 @@ function actions.match_tempo(take, item, detected_bpm, target_bpm)
                 "Tempo ratio too extreme: %.1f BPM -> %.1f BPM (%.1fx)\n\n" ..
                 "Supported range: 0.25x to 4.0x",
                 detected_bpm, target_bpm, rate),
-            "REABeat — Match Tempo", 0)
+            "ReaBeat — Match Tempo", 0)
         return false
     end
 
@@ -169,7 +169,7 @@ function actions.match_tempo(take, item, detected_bpm, target_bpm)
     reaper.UpdateItemInProject(item)
     reaper.PreventUIRefresh(-1)
     reaper.Undo_EndBlock(
-        string.format("REABeat: Match tempo %.1f -> %.1f BPM", detected_bpm, target_bpm), -1)
+        string.format("ReaBeat: Match tempo %.1f -> %.1f BPM", detected_bpm, target_bpm), -1)
 
     return true
 end

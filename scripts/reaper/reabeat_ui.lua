@@ -1,4 +1,4 @@
--- REABeat UI: All drawing functions
+-- ReaBeat UI: All drawing functions
 -- Premium, REAPER-native feel. Compact, functional, musical.
 
 local ui = {}
@@ -58,7 +58,7 @@ function draw_header(ctx, ImGui, C, state, w, callbacks)
 
     -- Title
     ImGui.PushStyleColor(ctx, C("Col_Text"), c.accent)
-    ImGui.Text(ctx, "REABeat")
+    ImGui.Text(ctx, "ReaBeat")
     ImGui.PopStyleColor(ctx, 1)
 
     -- Support button (next to title)
@@ -71,7 +71,7 @@ function draw_header(ctx, ImGui, C, state, w, callbacks)
 
     if ImGui.BeginPopup(ctx, "support_popup") then
         ImGui.PushStyleColor(ctx, C("Col_Text"), c.text_bright)
-        ImGui.Text(ctx, "REABeat is free & open source.")
+        ImGui.Text(ctx, "ReaBeat is free & open source.")
         ImGui.Text(ctx, "If it saves you time, consider supporting:")
         ImGui.PopStyleColor(ctx, 1)
         ImGui.Spacing(ctx)

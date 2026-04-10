@@ -16,8 +16,7 @@ Stability and platform update. Windows server launch completely reworked, GPU ac
 - **New: "Quantize to grid" checkbox** in Insert Stretch Markers mode — snaps markers to existing tempo map without modifying it (requested by Hipox, squibs)
 
 ### GPU Acceleration
-- **Auto-detect NVIDIA GPU** — installer checks for nvidia-smi and installs CUDA PyTorch (~2.5GB) from PyTorch cu124 index. Falls back to CPU gracefully
-- **MPS support** — Apple Silicon GPU (M1/M2/M3/M4) now used when CUDA is not available. Device priority: CUDA > MPS > CPU
+- **Auto-detect NVIDIA GPU** — installer checks for nvidia-smi and installs CUDA PyTorch (~2.5GB) from PyTorch cu124 index. Significantly faster detection, especially on longer tracks. Falls back to CPU gracefully
 
 ### Installer Improvements
 - **No git required** — downloads ZIP archive when git is not installed (Windows + macOS/Linux)

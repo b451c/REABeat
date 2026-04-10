@@ -113,16 +113,21 @@ if ($LASTEXITCODE -ne 0) {
     Abort "uv sync failed. Check the output above for details."
 }
 
-# Install CUDA PyTorch if NVIDIA GPU detected
+# Install CUDA PyTorch if NVIDIA GPU detected and not already installed
 $nvidiaSmi = Get-Command nvidia-smi -ErrorAction SilentlyContinue
 if ($nvidiaSmi) {
-    Write-Host ""
-    Write-Host "         NVIDIA GPU detected — installing CUDA acceleration (~2.5GB)..."
-    Write-Host "         This enables 10-50x faster beat detection."
-    Write-Host ""
-    uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "         CUDA install failed — continuing with CPU (still works, just slower)." -ForegroundColor Yellow
+    $cudaReady = uv run python -c "import torch; print(torch.cuda.is_available())" 2>$null
+    if ($cudaReady -ne "True") {
+        Write-Host ""
+        Write-Host "         NVIDIA GPU detected — installing CUDA acceleration (~2.5GB)..."
+        Write-Host "         This enables 10-50x faster beat detection."
+        Write-Host ""
+        uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "         CUDA install failed — continuing with CPU (still works, just slower)." -ForegroundColor Yellow
+        }
+    } else {
+        Write-Host "         NVIDIA GPU + CUDA PyTorch already installed."
     }
 }
 

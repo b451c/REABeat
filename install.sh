@@ -98,14 +98,19 @@ echo "         This may take a few minutes on first install (~800MB)."
 echo ""
 uv sync
 
-# Install CUDA PyTorch if NVIDIA GPU detected
+# Install CUDA PyTorch if NVIDIA GPU detected and not already installed
 if command -v nvidia-smi &>/dev/null; then
-    echo ""
-    echo "         NVIDIA GPU detected — installing CUDA acceleration (~2.5GB)..."
-    echo "         This enables 10-50x faster beat detection."
-    echo ""
-    uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio || \
-        echo "         CUDA install failed — continuing with CPU (still works, just slower)."
+    CUDA_READY=$(uv run python -c "import torch; print(torch.cuda.is_available())" 2>/dev/null)
+    if [ "$CUDA_READY" != "True" ]; then
+        echo ""
+        echo "         NVIDIA GPU detected — installing CUDA acceleration (~2.5GB)..."
+        echo "         This enables 10-50x faster beat detection."
+        echo ""
+        uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio || \
+            echo "         CUDA install failed — continuing with CPU (still works, just slower)."
+    else
+        echo "         NVIDIA GPU + CUDA PyTorch already installed."
+    fi
 fi
 
 echo ""

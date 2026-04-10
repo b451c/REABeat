@@ -104,7 +104,7 @@ if command -v nvidia-smi &>/dev/null; then
     echo "         NVIDIA GPU detected — installing CUDA acceleration (~2.5GB)..."
     echo "         This enables 10-50x faster beat detection."
     echo ""
-    uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio --quiet || \
+    uv pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu124 --reinstall-package torch --reinstall-package torchaudio || \
         echo "         CUDA install failed — continuing with CPU (still works, just slower)."
 fi
 

@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.2.1 (2026-04-10)
+
+Stability and platform update. Windows server launch completely reworked, GPU acceleration auto-detected, installer works without git. Based on community testing (Bassman002, squibs, Hipox).
+
+### Windows Server Fix
+- **Fixed server crash on launch** — Intel Fortran Runtime (PyTorch MKL) killed the server when REAPER's transient console was destroyed. Root cause: `start /B` shares parent console; when `os.execute()` returns, console is destroyed, `uv.exe` receives CTRL_CLOSE_EVENT and terminates before Python starts
+- **New launch method: wscript** — server now launches in a persistent hidden console via VBScript. Zero visible windows, zero freeze, server survives independently
+- **Fixed multiplying console windows** — port check fallback used `os.execute(netstat)` every ~30ms when LuaSocket was missing, creating visible windows. Now uses same mavriq-lua-sockets paths as the socket client, no os.execute fallback
+
+### Quantization Fixes
+- **Grid-independent tempo map snap** — replaced BR_GetClosestGridDivision (depends on user's grid setting) with TimeMap2_timeToBeats/beatsToTime. Always snaps to nearest bar line regardless of grid resolution
+- **Fixed constant tempo marker position** — marker was placed at wrong position when first downbeat was not at item start (pickup/anacrusis)
+- **Defensive timeline refresh** — explicit UpdateTimeline() between tempo map insertion and stretch marker quantization in Match & Quantize mode
+- **New: "Quantize to grid" checkbox** in Insert Stretch Markers mode — snaps markers to existing tempo map without modifying it (requested by Hipox, squibs)
+
+### GPU Acceleration
+- **Auto-detect NVIDIA GPU** — installer checks for nvidia-smi and installs CUDA PyTorch (~2.5GB) from PyTorch cu124 index. Falls back to CPU gracefully
+- **MPS support** — Apple Silicon GPU (M1/M2/M3/M4) now used when CUDA is not available. Device priority: CUDA > MPS > CPU
+
+### Installer Improvements
+- **No git required** — downloads ZIP archive when git is not installed (Windows + macOS/Linux)
+- **ZIP update preserves .venv** — re-running installer doesn't re-download 800MB Python deps
+- **Detects ZIP vs git installs** — no more "fatal: not a git repository" when updating ZIP installs
+- **beat-this via archive URL** — `uv sync` no longer requires git for dependencies
+- **Simplified update** — re-run the same install command to update (documented in README)
+
+### UI
+- **Minimum window width 360→420px** — prevents element overlap reported by Hipox
+- **Long filename truncation** — names truncated with tooltip on hover
+
+### Tests
+- 26 tests passing (unchanged)
+
 ## v1.2.0 (2026-04-09)
 
 Precision and quality update based on deep analysis of beat-this internals and community feedback (dukati, Bassman002, JetRed).

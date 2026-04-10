@@ -18,6 +18,7 @@ ReaBeat detects beats, downbeats, tempo, and time signature in any audio using [
 - **Editable BPM** - override detected tempo when you know better
 - **Neural downbeats** - accurate bar boundary detection using dedicated model head
 - **Multi-item cache** - switch between items without losing detection results
+- **GPU acceleration** - NVIDIA CUDA auto-detected on install, Apple Silicon MPS supported
 - **Cross-platform** - macOS, Windows, Linux
 
 ## Use Cases

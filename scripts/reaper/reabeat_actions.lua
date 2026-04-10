@@ -55,26 +55,26 @@ function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, ite
             false)
         count = 1
     else
-        -- Variable tempo: one marker per beat for precise grid alignment.
-        -- Per-beat markers match the industry standard (Ableton Warp, Pro Tools
-        -- Beat Detective) and give 1.00x stretch ratios when quantizing.
-        for i = 1, #beats do
-            local beat_time = item_pos + beats[i] + snap_offset
-            local beat_bpm = tempo
+        -- Variable tempo: one marker per bar (downbeat).
+        -- Per-bar keeps the timeline clean. Per-beat precision is handled
+        -- by stretch markers (per-item), matching how Ableton/Pro Tools
+        -- use clip-level warp markers for beat-level alignment.
+        for i = 1, #downbeats do
+            local db_time = item_pos + downbeats[i] + snap_offset
+            local bar_bpm = tempo
 
-            if i < #beats then
-                local ibi = beats[i + 1] - beats[i]
-                if ibi > 0.05 then
-                    beat_bpm = 60.0 / ibi
-                    beat_bpm = math.max(30, math.min(300, beat_bpm))
+            if i < #downbeats then
+                local bar_duration = downbeats[i + 1] - downbeats[i]
+                if bar_duration > 0 then
+                    bar_bpm = (ts_num / bar_duration) * 60.0
+                    bar_bpm = math.max(30, math.min(300, bar_bpm))
                 end
             end
 
-            -- Set time signature only on first marker
             local set_ts = (i == 1)
             reaper.SetTempoTimeSigMarker(0, -1,
-                beat_time, -1, -1,
-                beat_bpm,
+                db_time, -1, -1,
+                bar_bpm,
                 set_ts and math.floor(ts_num) or 0,
                 set_ts and math.floor(ts_denom) or 0,
                 true)

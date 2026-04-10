@@ -380,8 +380,9 @@ local function apply_action()
     elseif state.action_mode == 2 then
         -- Stretch Markers (optionally quantized to existing grid)
         local do_quantize = state.quantize_markers
-        if do_quantize and state.tempo > 0 then
-            local project_bpm = actions.get_project_bpm()
+        if do_quantize and state.tempo > 0 and state.item then
+            local item_pos = reaper.GetMediaItemInfo_Value(state.item, "D_POSITION")
+            local project_bpm = reaper.TimeMap_GetDividedBpmAtTime(item_pos)
             local diff = math.abs(project_bpm - state.tempo) / state.tempo
             if diff > 0.10 then
                 local ok = reaper.ShowMessageBox(

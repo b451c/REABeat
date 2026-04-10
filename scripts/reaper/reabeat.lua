@@ -1,10 +1,5 @@
 -- ReaBeat: Neural beat detection and tempo mapping for REAPER
 -- Entry point — run from Actions menu
---
--- Dependencies:
---   - ReaImGui 0.9+ (install via ReaPack)
---   - mavriq-lua-sockets (install via ReaPack)
---   - ReaBeat Python backend (auto-launched)
 
 local function get_script_dir()
     local src = (debug.getinfo(1, "S") or {}).source or ""
@@ -66,52 +61,22 @@ local function C(name)
     return const_cache[name]
 end
 
--- Detection cache: stores results per item GUID so switching items doesn't lose data
-local detection_cache = {}  -- keyed by item GUID
+local detection_cache = {}  -- per item GUID
 
--- Application state
 local state = {
-    -- Connection
-    connected = false,
-    connecting = false,
-    launching = false,
-    launch_start = 0,
-
-    -- Item info
-    item = nil,
-    take = nil,
-    item_guid = nil,
-    item_name = "",
-    item_duration = 0,
-    audio_path = "",
-
-    -- Detection
-    detecting = false,
-    detected = false,
-    detect_progress = 0,
-    detect_message = "",
-    beats = nil,
-    downbeats = nil,
-    tempo = 0,
-    time_sig_num = 4,
-    time_sig_denom = 4,
-    confidence = 0,
-    backend = "",
-    detection_time = 0,
-    peaks = nil,
-    audio_duration = 0,
-
-    -- UI
-    action_mode = 3,         -- 3=Match Tempo, 1=Tempo Map, 2=Stretch Markers, 4=Match & Quantize
-    tempo_mode = 1,          -- 1=Constant, 2=Variable (per bar)
-    marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
-    target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
-    align_to_bar = true,     -- Auto-align first downbeat to bar after Match Tempo
-    stretch_mode = 1,        -- 1=Balanced, 2=Transient, 3=Tonal (index into STRETCH_MODES)
-    quantize_markers = false, -- Quantize stretch markers to grid (mode 2 only)
-    status_message = "",
-    status_color = nil,
-    last_apply_count = 0,
+    connected = false, connecting = false, launching = false, launch_start = 0,
+    item = nil, take = nil, item_guid = nil, item_name = "", item_duration = 0, audio_path = "",
+    detecting = false, detected = false, detect_progress = 0, detect_message = "",
+    beats = nil, downbeats = nil, tempo = 0, time_sig_num = 4, time_sig_denom = 4,
+    confidence = 0, backend = "", detection_time = 0, peaks = nil, audio_duration = 0,
+    action_mode = 3,          -- 3=Match Tempo, 1=Tempo Map, 2=Stretch Markers, 4=Match & Quantize
+    tempo_mode = 1,           -- 1=Constant, 2=Variable
+    marker_mode = 1,          -- 1=Every beat, 2=Downbeats only
+    target_bpm = nil,         -- nil = use project BPM
+    align_to_bar = true,
+    stretch_mode = 1,         -- 1=Balanced, 2=Transient, 3=Tonal
+    quantize_markers = false, -- Quantize to grid (mode 2 only)
+    status_message = "", status_color = nil, last_apply_count = 0,
 }
 
 -- Save current detection to cache
@@ -379,11 +344,28 @@ local function apply_action()
         end
     elseif state.action_mode == 2 then
         -- Stretch Markers (optionally quantized to existing grid)
+        local do_quantize = state.quantize_markers
+        if do_quantize and state.tempo > 0 then
+            local project_bpm = actions.get_project_bpm()
+            local diff = math.abs(project_bpm - state.tempo) / state.tempo
+            if diff > 0.10 then
+                local ok = reaper.ShowMessageBox(
+                    string.format(
+                        "Project tempo (%.1f BPM) differs from detected (%.1f BPM) by %.0f%%.\n\n" ..
+                        "Quantizing to the current grid will produce extreme stretch ratios.\n\n" ..
+                        "To quantize correctly, use Match & Quantize mode instead\n" ..
+                        "(inserts tempo map first, then quantizes to it).\n\n" ..
+                        "Continue anyway?",
+                        project_bpm, state.tempo, diff * 100),
+                    "ReaBeat - Quantize Warning", 1)
+                if ok ~= 1 then do_quantize = false end
+            end
+        end
         local use_downbeats = state.marker_mode == 2
         local beat_list = use_downbeats and state.downbeats or state.beats
-        count = actions.insert_stretch_markers(state.take, beat_list, state.item, state.quantize_markers, stretch_flag)
+        count = actions.insert_stretch_markers(state.take, beat_list, state.item, do_quantize, stretch_flag)
         if count > 0 then
-            local label = state.quantize_markers and "quantized" or "inserted"
+            local label = do_quantize and "quantized" or "inserted"
             state.status_message = string.format("%d stretch markers %s", count, label)
             state.status_color = "success"
         end

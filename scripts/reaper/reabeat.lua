@@ -1,5 +1,10 @@
 -- ReaBeat: Neural beat detection and tempo mapping for REAPER
 -- Entry point — run from Actions menu
+--
+-- Dependencies:
+--   - ReaImGui 0.9+ (install via ReaPack)
+--   - mavriq-lua-sockets (install via ReaPack)
+--   - ReaBeat Python backend (auto-launched)
 
 local function get_script_dir()
     local src = (debug.getinfo(1, "S") or {}).source or ""

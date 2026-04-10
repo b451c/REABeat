@@ -219,7 +219,7 @@ function server.launch()
                     vbs:write('Set WshShell = CreateObject("WScript.Shell")\n')
                     vbs:write('WshShell.Run "cmd /C ""' .. bat_file .. '""", 0, False\n')
                     vbs:close()
-                    cmd = string.format('wscript "%s"', vbs_file)
+                    cmd = string.format('start "" wscript "%s"', vbs_file)
                 end
             end
         end

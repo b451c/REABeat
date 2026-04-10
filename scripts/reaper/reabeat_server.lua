@@ -122,25 +122,42 @@ local function find_command(name)
     return nil
 end
 
--- Check if port is open via TCP connect
+-- Load socket lib with mavriq-lua-sockets paths (same as reabeat_socket.lua)
+local _socket_lib = nil
+local function get_socket_for_port_check()
+    if _socket_lib then return _socket_lib end
+    local ok, lib = pcall(require, "socket")
+    if ok and lib then _socket_lib = lib; return lib end
+    -- Add ReaPack socket paths and retry
+    local resource_path = reaper.GetResourcePath()
+    local extension = IS_WIN and "dll" or "so"
+    local paths = {
+        resource_path .. SEP .. "Scripts" .. SEP .. "Mavriq ReaScript Repository" .. SEP ..
+            "Various" .. SEP .. "Mavriq-Lua-Sockets" .. SEP,
+        resource_path .. SEP .. "Scripts" .. SEP .. "mavriq-lua-sockets" .. SEP,
+        resource_path .. SEP .. "UserPlugins" .. SEP,
+    }
+    for _, path in ipairs(paths) do
+        package.cpath = package.cpath .. ";" .. path .. "?." .. extension
+        package.cpath = package.cpath .. ";" .. path .. "socket" .. SEP .. "?." .. extension
+        package.path = package.path .. ";" .. path .. "?.lua"
+    end
+    ok, lib = pcall(require, "socket")
+    if ok and lib then _socket_lib = lib; return lib end
+    ok, lib = pcall(require, "socket.core")
+    if ok and lib then _socket_lib = lib; return lib end
+    return nil
+end
+
+-- Check if port is open via TCP connect (no os.execute — avoids visible console windows)
 local function is_port_open()
-    local ok, socket_lib = pcall(require, "socket")
-    if ok and socket_lib then
-        local tcp = socket_lib.tcp()
-        tcp:settimeout(0.3)
-        local connected = tcp:connect("127.0.0.1", PORT)
-        tcp:close()
-        return connected == 1
-    end
-    -- Fallback: platform-specific port check
-    local cmd
-    if IS_WIN then
-        cmd = string.format('netstat -ano | findstr ":%d " | findstr LISTENING > %s 2>&1', PORT, NULL_DEV)
-    else
-        cmd = string.format("lsof -ti:%d > %s 2>&1", PORT, NULL_DEV)
-    end
-    local result = os.execute(cmd)
-    return result == true or result == 0
+    local lib = get_socket_for_port_check()
+    if not lib then return false end
+    local tcp = lib.tcp()
+    tcp:settimeout(0.3)
+    local connected = tcp:connect("127.0.0.1", PORT)
+    tcp:close()
+    return connected == 1
 end
 
 function server.is_running()
@@ -193,7 +210,17 @@ function server.launch()
                 bat:write(string.format('%s -m reabeat serve --port %d --idle-timeout %d > "%s" 2>&1\r\n',
                     runner, PORT, IDLE_TIMEOUT_SEC, LOG_FILE))
                 bat:close()
-                cmd = string.format('start /B cmd /C "%s"', bat_file)
+                -- Launch via wscript to get a persistent hidden console.
+                -- start /B shares the parent's transient console which is
+                -- destroyed when os.execute() returns, killing uv.exe.
+                local vbs_file = TEMP_DIR .. SEP .. "reabeat_launch.vbs"
+                local vbs = io.open(vbs_file, "w")
+                if vbs then
+                    vbs:write('Set WshShell = CreateObject("WScript.Shell")\n')
+                    vbs:write('WshShell.Run "cmd /C ""' .. bat_file .. '""", 0, False\n')
+                    vbs:close()
+                    cmd = string.format('wscript "%s"', vbs_file)
+                end
             end
         end
     else

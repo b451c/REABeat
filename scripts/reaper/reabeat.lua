@@ -66,22 +66,52 @@ local function C(name)
     return const_cache[name]
 end
 
-local detection_cache = {}  -- per item GUID
+-- Detection cache: stores results per item GUID so switching items doesn't lose data
+local detection_cache = {}  -- keyed by item GUID
 
+-- Application state
 local state = {
-    connected = false, connecting = false, launching = false, launch_start = 0,
-    item = nil, take = nil, item_guid = nil, item_name = "", item_duration = 0, audio_path = "",
-    detecting = false, detected = false, detect_progress = 0, detect_message = "",
-    beats = nil, downbeats = nil, tempo = 0, time_sig_num = 4, time_sig_denom = 4,
-    confidence = 0, backend = "", detection_time = 0, peaks = nil, audio_duration = 0,
-    action_mode = 3,          -- 3=Match Tempo, 1=Tempo Map, 2=Stretch Markers, 4=Match & Quantize
-    tempo_mode = 1,           -- 1=Constant, 2=Variable
-    marker_mode = 1,          -- 1=Every beat, 2=Downbeats only
-    target_bpm = nil,         -- nil = use project BPM
-    align_to_bar = true,
-    stretch_mode = 1,         -- 1=Balanced, 2=Transient, 3=Tonal
-    quantize_markers = false, -- Quantize to grid (mode 2 only)
-    status_message = "", status_color = nil, last_apply_count = 0,
+    -- Connection
+    connected = false,
+    connecting = false,
+    launching = false,
+    launch_start = 0,
+
+    -- Item info
+    item = nil,
+    take = nil,
+    item_guid = nil,
+    item_name = "",
+    item_duration = 0,
+    audio_path = "",
+
+    -- Detection
+    detecting = false,
+    detected = false,
+    detect_progress = 0,
+    detect_message = "",
+    beats = nil,
+    downbeats = nil,
+    tempo = 0,
+    time_sig_num = 4,
+    time_sig_denom = 4,
+    confidence = 0,
+    backend = "",
+    detection_time = 0,
+    peaks = nil,
+    audio_duration = 0,
+
+    -- UI
+    action_mode = 3,         -- 3=Match Tempo, 1=Tempo Map, 2=Stretch Markers, 4=Match & Quantize
+    tempo_mode = 1,          -- 1=Constant, 2=Variable (per bar)
+    marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
+    target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
+    align_to_bar = true,     -- Auto-align first downbeat to bar after Match Tempo
+    stretch_mode = 1,        -- 1=Balanced, 2=Transient, 3=Tonal (index into STRETCH_MODES)
+    quantize_markers = false, -- Quantize stretch markers to grid (mode 2 only)
+    status_message = "",
+    status_color = nil,
+    last_apply_count = 0,
 }
 
 -- Save current detection to cache

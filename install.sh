@@ -59,14 +59,31 @@ fi
 # Step 2: Clone or update repo
 echo ""
 echo "  [2/4] Getting ReaBeat..."
-if [ -d "$INSTALL_DIR" ]; then
-    echo "         Updating existing installation..."
-    cd "$INSTALL_DIR"
-    git pull --ff-only 2>/dev/null || echo "         (could not auto-update, using existing)"
+if command -v git &>/dev/null; then
+    if [ -d "$INSTALL_DIR" ]; then
+        echo "         Updating existing installation..."
+        cd "$INSTALL_DIR"
+        git pull --ff-only 2>/dev/null || echo "         (could not auto-update, using existing)"
+    else
+        echo "         Downloading to $INSTALL_DIR..."
+        git clone "$REPO_URL" "$INSTALL_DIR"
+        cd "$INSTALL_DIR"
+    fi
 else
-    echo "         Downloading to $INSTALL_DIR..."
-    git clone "$REPO_URL" "$INSTALL_DIR"
+    # No git — download ZIP archive instead
+    echo "         git not found — downloading ZIP..."
+    ZIP_URL="https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip"
+    ZIP_FILE="/tmp/ReaBeat-main.zip"
+    EXTRACT_DIR="/tmp/ReaBeat-extract"
+    curl -sSL "$ZIP_URL" -o "$ZIP_FILE" || { echo "  ERROR: Download failed"; exit 1; }
+    rm -rf "$EXTRACT_DIR"
+    unzip -q "$ZIP_FILE" -d "$EXTRACT_DIR" || { echo "  ERROR: Extraction failed (install unzip: sudo apt install unzip)"; exit 1; }
+    if [ -d "$INSTALL_DIR" ]; then rm -rf "$INSTALL_DIR"; fi
+    mv "$EXTRACT_DIR/ReaBeat-main" "$INSTALL_DIR"
+    rm -f "$ZIP_FILE"
+    rm -rf "$EXTRACT_DIR"
     cd "$INSTALL_DIR"
+    echo "         Downloaded to $INSTALL_DIR"
 fi
 
 # Step 3: Install Python dependencies

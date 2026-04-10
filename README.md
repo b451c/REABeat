@@ -79,7 +79,7 @@ git clone https://github.com/b451c/ReaBeat.git
 cd ReaBeat
 ```
 
-> Don't have git? Download ZIP: https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip
+> No git? The quick install scripts download a ZIP automatically. For manual install, download: https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip
 
 #### Step 3: Install Python dependencies
 

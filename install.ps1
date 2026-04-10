@@ -52,23 +52,44 @@ if ($uvPath) {
 Write-Host ""
 Write-Host "  [2/4] Getting ReaBeat..." -ForegroundColor Yellow
 $gitPath = Get-Command git -ErrorAction SilentlyContinue
-if (-not $gitPath) {
-    Abort "git is not installed.`n         Install from: https://git-scm.com/download/win`n         Or download ZIP: https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip"
-}
-if (Test-Path $INSTALL_DIR) {
-    Write-Host "         Updating existing installation..."
-    Push-Location $INSTALL_DIR
-    git pull --ff-only
-    if ($LASTEXITCODE -ne 0) {
+if ($gitPath) {
+    if (Test-Path $INSTALL_DIR) {
+        Write-Host "         Updating existing installation..."
+        Push-Location $INSTALL_DIR
+        git pull --ff-only
+        if ($LASTEXITCODE -ne 0) {
+            Pop-Location
+            Abort "git pull failed. Try deleting $INSTALL_DIR and running installer again."
+        }
         Pop-Location
-        Abort "git pull failed. Try deleting $INSTALL_DIR and running installer again."
+    } else {
+        Write-Host "         Downloading to $INSTALL_DIR..."
+        git clone $REPO_URL $INSTALL_DIR
+        if ($LASTEXITCODE -ne 0) {
+            Abort "git clone failed. Check your internet connection."
+        }
     }
-    Pop-Location
 } else {
-    Write-Host "         Downloading to $INSTALL_DIR..."
-    git clone $REPO_URL $INSTALL_DIR
-    if ($LASTEXITCODE -ne 0) {
-        Abort "git clone failed. Check your internet connection."
+    # No git — download ZIP archive instead
+    $zipUrl = "https://github.com/b451c/ReaBeat/archive/refs/heads/main.zip"
+    $zipFile = Join-Path $env:TEMP "ReaBeat-main.zip"
+    $extractDir = Join-Path $env:TEMP "ReaBeat-extract"
+    try {
+        Write-Host "         git not found — downloading ZIP..."
+        Invoke-WebRequest -Uri $zipUrl -OutFile $zipFile -UseBasicParsing
+        if (Test-Path $extractDir) { Remove-Item $extractDir -Recurse -Force }
+        Expand-Archive -Path $zipFile -DestinationPath $extractDir -Force
+        $extracted = Join-Path $extractDir "ReaBeat-main"
+        if (-not (Test-Path $extracted)) {
+            Abort "ZIP extraction failed — expected ReaBeat-main folder not found."
+        }
+        if (Test-Path $INSTALL_DIR) { Remove-Item $INSTALL_DIR -Recurse -Force }
+        Move-Item $extracted $INSTALL_DIR
+        Remove-Item $zipFile -ErrorAction SilentlyContinue
+        Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+        Write-Host "         Downloaded to $INSTALL_DIR"
+    } catch {
+        Abort "Failed to download ReaBeat: $_`n         Try manually: $zipUrl"
     }
 }
 Push-Location $INSTALL_DIR

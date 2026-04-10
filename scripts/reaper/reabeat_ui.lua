@@ -9,11 +9,6 @@ local function fmt_time(s)
     return string.format("%d:%02d", math.floor(s / 60), math.floor(s) % 60)
 end
 
-local function fmt_time_ms(s)
-    if not s or s < 0 then return "0:00.0" end
-    return string.format("%d:%04.1f", math.floor(s / 60), s % 60)
-end
-
 function ui.draw(ctx, ImGui, C, state, callbacks)
     local c = theme.colors
     local avail_w = ImGui.GetContentRegionAvail(ctx)

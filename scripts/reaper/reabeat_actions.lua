@@ -6,7 +6,7 @@ local actions = {}
 --- Insert tempo/time signature markers at detected bar positions.
 -- Snaps first beat to nearest bar boundary for grid alignment.
 -- @return Number of markers inserted, or 0 if cancelled
-function actions.insert_tempo_map(beats, downbeats, tempo, ts_num, ts_denom, item, variable)
+function actions.insert_tempo_map(downbeats, tempo, ts_num, ts_denom, item, variable)
     if not downbeats or #downbeats == 0 then return 0 end
 
     -- Warn if existing tempo markers will be affected

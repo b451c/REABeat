@@ -73,7 +73,6 @@ local detection_cache = {}  -- keyed by item GUID
 local state = {
     -- Connection
     connected = false,
-    connecting = false,
     launching = false,
     launch_start = 0,
 
@@ -370,7 +369,7 @@ local function apply_action()
     if state.action_mode == 1 then
         -- Tempo Map
         count = actions.insert_tempo_map(
-            state.beats, state.downbeats, state.tempo,
+            state.downbeats, state.tempo,
             state.time_sig_num, state.time_sig_denom,
             state.item, state.tempo_mode == 2)
         if count > 0 then
@@ -427,7 +426,7 @@ local function apply_action()
     elseif state.action_mode == 4 then
         -- Match & Quantize: tempo map first, then stretch markers snapped to it
         local tempo_count = actions.insert_tempo_map(
-            state.beats, state.downbeats, state.tempo,
+            state.downbeats, state.tempo,
             state.time_sig_num, state.time_sig_denom,
             state.item, true)  -- always variable for best grid alignment
         if tempo_count > 0 then

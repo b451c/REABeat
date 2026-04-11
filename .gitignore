@@ -32,3 +32,6 @@ forum*.txt
 # Logs
 *.log
 /tmp/
+
+# Tests (local only)
+tests/

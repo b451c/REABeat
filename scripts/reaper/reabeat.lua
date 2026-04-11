@@ -377,28 +377,11 @@ local function apply_action()
             state.status_color = "success"
         end
     elseif state.action_mode == 2 then
-        -- Stretch Markers (optionally quantized to existing grid)
+        -- Stretch Markers (optionally quantized to even spacing within bars)
         local do_quantize = state.quantize_markers
-        if do_quantize and state.tempo > 0 and state.item then
-            local item_pos = reaper.GetMediaItemInfo_Value(state.item, "D_POSITION")
-            local project_bpm = reaper.TimeMap_GetDividedBpmAtTime(item_pos)
-            local diff = math.abs(project_bpm - state.tempo) / state.tempo
-            if diff > 0.10 then
-                local ok = reaper.ShowMessageBox(
-                    string.format(
-                        "Project tempo (%.1f BPM) differs from detected (%.1f BPM) by %.0f%%.\n\n" ..
-                        "Quantizing to the current grid will produce extreme stretch ratios.\n\n" ..
-                        "To quantize correctly, use Match & Quantize mode instead\n" ..
-                        "(inserts tempo map first, then quantizes to it).\n\n" ..
-                        "Continue anyway?",
-                        project_bpm, state.tempo, diff * 100),
-                    "ReaBeat - Quantize Warning", 1)
-                if ok ~= 1 then do_quantize = false end
-            end
-        end
         local use_downbeats = state.marker_mode == 2
         local beat_list = use_downbeats and state.downbeats or state.beats
-        count = actions.insert_stretch_markers(state.take, beat_list, state.item, do_quantize, stretch_flag)
+        count = actions.insert_stretch_markers(state.take, beat_list, state.item, do_quantize, stretch_flag, state.downbeats, state.time_sig_num)
         if count > 0 then
             local label = do_quantize and "quantized" or "inserted"
             state.status_message = string.format("%d stretch markers %s", count, label)
@@ -428,13 +411,13 @@ local function apply_action()
         local tempo_count = actions.insert_tempo_map(
             state.downbeats, state.tempo,
             state.time_sig_num, state.time_sig_denom,
-            state.item, true)  -- always variable for best grid alignment
+            state.item, true, true)  -- variable=true, skip_snap=true
         if tempo_count > 0 then
             -- Force timeline refresh so TimeMap2 sees the new tempo markers
             reaper.UpdateTimeline()
             local use_downbeats = state.marker_mode == 2
             local beat_list = use_downbeats and state.downbeats or state.beats
-            count = actions.insert_stretch_markers(state.take, beat_list, state.item, true, stretch_flag)
+            count = actions.insert_stretch_markers(state.take, beat_list, state.item, true, stretch_flag, state.downbeats, state.time_sig_num)
             if count > 0 then
                 state.status_message = string.format(
                     "%d tempo markers + %d stretch markers (quantized)", tempo_count, count)

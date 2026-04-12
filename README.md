@@ -14,6 +14,7 @@ ReaBeat detects beats, downbeats, tempo, and time signature in any audio using [
 
 - **Detect beats** - state-of-the-art neural beat tracking, ~2-3 seconds per song
 - **Match tempo** - one click to adjust playrate to project BPM or custom target (pitch preserved, auto-aligned to bar)
+- **Insert tempo map** - sync REAPER's grid to audio without modifying it (constant, per-bar, or per-beat markers)
 - **Insert stretch markers** - at every beat or every downbeat, with quality mode selection (Balanced/Transient/Tonal), optional quantize to REAPER's project grid
 - **Editable BPM** - override detected tempo when you know better
 - **Neural downbeats** - accurate bar boundary detection using dedicated model head
@@ -24,6 +25,7 @@ ReaBeat detects beats, downbeats, tempo, and time signature in any audio using [
 ## Use Cases
 
 - **Match a song to your session** — detect BPM, one click to match project tempo
+- **Sync grid to a live recording** — insert tempo map so REAPER's grid follows the audio
 - **Sync two tracks** — match both to the same BPM with auto-alignment
 - **Quantize timing** — insert stretch markers snapped to REAPER's grid
 - **Prep for editing** — know the BPM and bar structure before you start cutting
@@ -138,6 +140,7 @@ Recommended: also install [SWS Extension](https://www.sws-extension.org/) (enabl
 4. (Optional) Click detected BPM to edit if needed
 5. Choose your action:
    - **Match Tempo** - adjust playrate to project BPM or custom target (auto-aligns to bar)
+   - **Insert Tempo Map** - sync REAPER's grid to audio (constant, per-bar, or per-beat)
    - **Insert Stretch Markers** - every beat or downbeats only, optionally quantized to REAPER's grid
 6. Click **Apply** (Ctrl+Z to undo)
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## v1.3.1 (2026-04-12)
+
+Restored Insert Tempo Map with improved reliability. Community-requested (Daodan).
+
+### Insert Tempo Map (restored)
+- **Three modes**: Constant (single BPM), Variable - bars (per-bar markers at downbeats), Variable - beats (per-beat markers for maximum precision)
+- **Syncs REAPER's grid to audio** — does NOT modify the audio item, only changes the project tempo map
+- **Octave correction** — prevents 2x/0.5x BPM errors in variable mode
+- **BPM filtering** — rejects erroneous neural downbeats that produce nonsense tempo values (>25% from detected BPM)
+
+### Downbeat Cleaning
+- **New**: Neural downbeats from beat-this are now cleaned before use — removes erroneous extra downbeats and fills gaps where downbeats are missing
+- **Improves**: tempo map accuracy, time signature detection, downbeat-only stretch markers
+
+### Tests
+- 36 tests passing (unchanged)
+
 ## v1.3.0 (2026-04-11)
 
 Simplified UI, precision improvements, beat detection overhaul.

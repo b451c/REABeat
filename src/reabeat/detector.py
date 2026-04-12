@@ -172,9 +172,10 @@ def detect_beats(
     # Use beat-this neural downbeats (dedicated model head) instead of
     # naive every-Nth-beat. Falls back to naive if neural returns empty.
     if len(raw_downbeats) >= 2:
-        downbeats = raw_downbeats.tolist()
         time_sig_num = _time_sig_from_downbeats(beats, raw_downbeats)
         time_sig_denom = 4
+        # Clean up noisy neural downbeats: remove outliers, fill gaps
+        downbeats = _clean_downbeats(raw_downbeats, tempo, time_sig_num)
     else:
         time_sig_num, time_sig_denom = _estimate_time_signature(beats, tempo)
         downbeats = _compute_downbeats(beats, time_sig_num)
@@ -196,6 +197,54 @@ def detect_beats(
         peaks=peaks,
         detection_time=round(detection_time, 2),
     )
+
+
+# ---------------------------------------------------------------------------
+# Downbeat cleaning
+# ---------------------------------------------------------------------------
+def _clean_downbeats(
+    raw_downbeats: np.ndarray, tempo: float, time_sig_num: int
+) -> List[float]:
+    """Clean up noisy neural downbeats.
+
+    Neural downbeats from beat-this can be inconsistent: extra downbeats
+    placed too close together, or missing downbeats creating gaps.
+    This filters outliers and fills gaps using the detected tempo.
+    """
+    if len(raw_downbeats) < 2:
+        return raw_downbeats.tolist()
+
+    expected_bar = 60.0 * time_sig_num / tempo
+    intervals = np.diff(raw_downbeats)
+    median_interval = float(np.median(intervals))
+
+    # Use whichever is more reliable: median interval or tempo-derived
+    if abs(median_interval - expected_bar) / expected_bar < 0.15:
+        ref_interval = expected_bar
+    else:
+        ref_interval = median_interval
+
+    # Filter: keep only downbeats that create reasonable bar durations
+    cleaned = [float(raw_downbeats[0])]
+    for i in range(1, len(raw_downbeats)):
+        gap = raw_downbeats[i] - cleaned[-1]
+        ratio = gap / ref_interval
+
+        if ratio < 0.6:
+            # Too close — skip this downbeat (erroneous extra)
+            continue
+        elif ratio > 1.6:
+            # Too far — fill in missing downbeats
+            n_missing = round(ratio) - 1
+            for j in range(1, n_missing + 1):
+                filled = cleaned[-1] + ref_interval * j / (n_missing + 1)
+                cleaned.append(filled)
+            cleaned.append(float(raw_downbeats[i]))
+        else:
+            # Normal — keep
+            cleaned.append(float(raw_downbeats[i]))
+
+    return cleaned
 
 
 # ---------------------------------------------------------------------------

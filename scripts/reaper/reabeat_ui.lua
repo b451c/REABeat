@@ -57,7 +57,7 @@ function draw_header(ctx, ImGui, C, state, w, callbacks)
     ImGui.PopStyleColor(ctx, 1)
     ImGui.SameLine(ctx)
     ImGui.PushStyleColor(ctx, C("Col_Text"), c.text_dim)
-    ImGui.Text(ctx, "v1.3.0")
+    ImGui.Text(ctx, "v1.3.1")
     ImGui.PopStyleColor(ctx, 1)
 
     -- Support button (next to title)
@@ -286,9 +286,40 @@ function draw_actions(ctx, ImGui, C, state, w, callbacks)
 
     ImGui.Spacing(ctx)
 
+    -- 2. Insert Tempo Map (sync grid to audio)
+    if ImGui.RadioButton(ctx, "Insert Tempo Map", state.action_mode == 1) then
+        state.action_mode = 1
+    end
+    if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+        ImGui.SetTooltip(ctx, "Sync REAPER's grid to the audio tempo.\nDoes NOT modify the audio — only changes the tempo map.\nUse for live recordings or songs with tempo changes.")
+    end
+
+    if state.action_mode == 1 then
+        ImGui.Indent(ctx, 20)
+        if ImGui.RadioButton(ctx, string.format("Constant (%.1f BPM)", state.tempo), state.tempo_map_mode == 1) then
+            state.tempo_map_mode = 1
+        end
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "Single tempo marker. Best for songs with steady tempo.")
+        end
+        if ImGui.RadioButton(ctx, string.format("Variable - bars (%d markers)", #state.downbeats), state.tempo_map_mode == 2) then
+            state.tempo_map_mode = 2
+        end
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "Per-bar tempo markers at each downbeat.\nBest for live recordings with tempo changes.")
+        end
+        if ImGui.RadioButton(ctx, string.format("Variable - beats (%d markers)", #state.beats), state.tempo_map_mode == 3) then
+            state.tempo_map_mode = 3
+        end
+        if ImGui.IsItemHovered(ctx, C("HoveredFlags_ForTooltip")) then
+            ImGui.SetTooltip(ctx, "Per-beat tempo markers for maximum precision.\nBest for rubato, swing, or complex rhythms.")
+        end
+        ImGui.Unindent(ctx, 20)
+    end
+
     ImGui.Spacing(ctx)
 
-    -- 2. Insert Stretch Markers
+    -- 3. Insert Stretch Markers
     if ImGui.RadioButton(ctx, "Insert Stretch Markers", state.action_mode == 2) then
         state.action_mode = 2
     end

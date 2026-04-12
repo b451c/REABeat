@@ -103,6 +103,100 @@ function actions.insert_stretch_markers(take, beat_times, item, quantize_to_grid
     return count
 end
 
+--- Insert tempo markers to sync REAPER's grid to detected audio tempo.
+-- Does NOT modify the audio item — only changes the project tempo map.
+-- @param beat_list Positions to place markers (downbeats for per-bar, beats for per-beat)
+-- @param beats_per_marker How many beats each marker interval represents
+--        (time_sig_num for downbeats, 1 for every beat)
+-- @param mode "constant", "variable_bars", or "variable_beats"
+-- @return Number of markers inserted, or 0 if cancelled
+function actions.insert_tempo_map(take, item, tempo, beat_list, beats_per_marker, time_sig_num, time_sig_denom, mode)
+    if not take or not item then return 0 end
+    if not beat_list or #beat_list == 0 then return 0 end
+
+    -- Warn about existing tempo markers
+    local existing = reaper.CountTempoTimeSigMarkers(0)
+    if existing > 0 then
+        local ok = reaper.ShowMessageBox(
+            string.format(
+                "Project has %d tempo marker(s).\n\n" ..
+                "ReaBeat will ADD new markers.\n" ..
+                "Clear existing markers first?\n\n" ..
+                "Yes = Clear all, then insert\n" ..
+                "No = Keep existing, add new",
+                existing),
+            "ReaBeat - Tempo Map", 3)  -- Yes/No/Cancel
+        if ok == 2 then return 0 end  -- Cancel
+        if ok == 6 then  -- Yes = clear
+            for i = existing - 1, 0, -1 do
+                reaper.DeleteTempoTimeSigMarker(0, i)
+            end
+        end
+    end
+
+    reaper.Undo_BeginBlock()
+    reaper.PreventUIRefresh(1)
+
+    local item_pos = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+    local take_offset = reaper.GetMediaItemTakeInfo_Value(take, "D_STARTOFFS")
+    local playrate = reaper.GetMediaItemTakeInfo_Value(take, "D_PLAYRATE")
+
+    local count = 0
+
+    local effective_bpm = tempo * playrate
+
+    if mode ~= "constant" and #beat_list >= 2 then
+        -- Variable: per-position tempo markers following the audio.
+        -- Filter out positions that create BPM too far from detected.
+        for i = 1, #beat_list - 1 do
+            local pos = item_pos + (beat_list[i] - take_offset) / playrate
+            local next_pos = item_pos + (beat_list[i + 1] - take_offset) / playrate
+            local interval = next_pos - pos
+            if interval > 0.05 then
+                local local_bpm = 60.0 * beats_per_marker / interval
+                -- Octave correction (78-185 BPM range)
+                while local_bpm < 78 do local_bpm = local_bpm * 2 end
+                while local_bpm > 185 do local_bpm = local_bpm / 2 end
+                -- Skip if >25% different from detected tempo
+                local ratio = local_bpm / effective_bpm
+                if ratio > 0.75 and ratio < 1.25 then
+                    reaper.SetTempoTimeSigMarker(0, -1, pos, -1, -1,
+                        local_bpm, time_sig_num, time_sig_denom, false)
+                    count = count + 1
+                end
+            end
+        end
+    else
+        -- Constant: single tempo marker at first position
+        local first_pos = item_pos + (beat_list[1] - take_offset) / playrate
+
+        -- Snap to nearest bar boundary (TimeMap2)
+        local _, measures = reaper.TimeMap2_timeToBeats(0, first_pos)
+        local bar_start = reaper.TimeMap2_beatsToTime(0, 0, measures)
+        local next_bar = reaper.TimeMap2_beatsToTime(0, 0, measures + 1)
+        local snap_to
+        if math.abs(first_pos - bar_start) <= math.abs(first_pos - next_bar) then
+            snap_to = bar_start
+        else
+            snap_to = next_bar
+        end
+
+        reaper.SetTempoTimeSigMarker(0, -1, snap_to, -1, -1,
+            effective_bpm, time_sig_num, time_sig_denom, false)
+        count = 1
+    end
+
+    reaper.UpdateTimeline()
+    reaper.PreventUIRefresh(-1)
+
+    local label = mode == "constant"
+        and string.format("ReaBeat: Insert tempo marker (%.1f BPM)", effective_bpm)
+        or string.format("ReaBeat: Insert %d tempo markers (%s)", count, mode)
+    reaper.Undo_EndBlock(label, -1)
+
+    return count
+end
+
 --- Get current project BPM.
 -- @return number BPM
 function actions.get_project_bpm()

@@ -101,7 +101,8 @@ local state = {
     audio_duration = 0,
 
     -- UI
-    action_mode = 3,         -- 3=Match Tempo, 2=Insert Stretch Markers
+    action_mode = 3,         -- 3=Match Tempo, 1=Insert Tempo Map, 2=Insert Stretch Markers
+    tempo_map_mode = 1,      -- 1=Constant, 2=Variable (per-bar)
     marker_mode = 1,         -- 1=Every beat, 2=Downbeats only
     target_bpm = nil,        -- Target BPM for Match Tempo (nil = use project BPM)
     align_to_bar = true,     -- Auto-align first downbeat to bar after Match Tempo
@@ -383,6 +384,29 @@ local function apply_action()
         else
             state.status_message = "Set a target BPM first"
             state.status_color = "warning"
+        end
+    elseif state.action_mode == 1 then
+        -- Insert Tempo Map (sync grid to audio, don't modify item)
+        local mode, beat_list, beats_per_marker
+        if state.tempo_map_mode == 1 then
+            mode = "constant"
+            beat_list = state.downbeats
+            beats_per_marker = state.time_sig_num
+        elseif state.tempo_map_mode == 2 then
+            mode = "variable_bars"
+            beat_list = state.downbeats
+            beats_per_marker = state.time_sig_num
+        else
+            mode = "variable_beats"
+            beat_list = state.beats
+            beats_per_marker = 1
+        end
+        count = actions.insert_tempo_map(
+            state.take, state.item, state.tempo, beat_list, beats_per_marker,
+            state.time_sig_num, state.time_sig_denom, mode)
+        if count > 0 then
+            state.status_message = string.format("%d tempo marker(s) inserted", count)
+            state.status_color = "success"
         end
     elseif state.action_mode == 2 then
         -- Insert Stretch Markers (optionally quantized to REAPER grid)

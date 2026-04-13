@@ -4,7 +4,6 @@
 
 $REPO_URL = "https://github.com/b451c/ReaBeat.git"
 $INSTALL_DIR = "$env:USERPROFILE\ReaBeat"
-$REAPER_SCRIPTS = "$env:APPDATA\REAPER\Scripts"
 
 function Abort($msg) {
     Write-Host ""
@@ -22,6 +21,24 @@ Write-Host "  |     Neural beat detection for REAPER |" -ForegroundColor Cyan
 Write-Host "  +======================================+" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "  Platform: Windows"
+
+# Find REAPER resource path
+$REAPER_RESOURCE = "$env:APPDATA\REAPER"
+if (-not (Test-Path $REAPER_RESOURCE)) {
+    Write-Host ""
+    Write-Host "  REAPER not found at default location:"
+    Write-Host "    $REAPER_RESOURCE"
+    Write-Host ""
+    Write-Host "  To find your REAPER resource path:"
+    Write-Host "    REAPER > Options > Show REAPER resource path"
+    Write-Host ""
+    $REAPER_RESOURCE = Read-Host "  Enter path"
+
+    if (-not (Test-Path (Join-Path $REAPER_RESOURCE "reaper.ini"))) {
+        Abort "reaper.ini not found in: $REAPER_RESOURCE`n         Make sure REAPER is installed and has been run at least once."
+    }
+}
+$REAPER_SCRIPTS = "$REAPER_RESOURCE\Scripts"
 
 # Step 1: Install uv if needed
 Write-Host ""

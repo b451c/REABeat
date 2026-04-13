@@ -6,7 +6,6 @@ set -e
 
 REPO_URL="https://github.com/b451c/ReaBeat.git"
 INSTALL_DIR="$HOME/ReaBeat"
-REAPER_SCRIPTS=""
 
 echo ""
 echo "  ╔══════════════════════════════════════╗"
@@ -26,18 +25,30 @@ echo "  Platform: $PLATFORM"
 
 # Find REAPER resource path
 if [ "$PLATFORM" = "macOS" ]; then
-    REAPER_SCRIPTS="$HOME/Library/Application Support/REAPER/Scripts"
+    REAPER_RESOURCE="$HOME/Library/Application Support/REAPER"
 else
-    REAPER_SCRIPTS="$HOME/.config/REAPER/Scripts"
+    REAPER_RESOURCE="$HOME/.config/REAPER"
 fi
 
-if [ ! -d "$(dirname "$REAPER_SCRIPTS")" ]; then
+if [ ! -d "$REAPER_RESOURCE" ]; then
     echo ""
-    echo "  WARNING: REAPER config directory not found."
-    echo "  Expected: $(dirname "$REAPER_SCRIPTS")"
-    echo "  Make sure REAPER is installed and has been run at least once."
+    echo "  REAPER not found at default location:"
+    echo "    $REAPER_RESOURCE"
     echo ""
+    echo "  To find your REAPER resource path:"
+    echo "    REAPER > Options > Show REAPER resource path"
+    echo ""
+    read -r -p "  Enter path: " REAPER_RESOURCE < /dev/tty
+
+    if [ ! -f "$REAPER_RESOURCE/reaper.ini" ]; then
+        echo ""
+        echo "  ERROR: reaper.ini not found in: $REAPER_RESOURCE"
+        echo "  Make sure REAPER is installed and has been run at least once."
+        exit 1
+    fi
 fi
+
+REAPER_SCRIPTS="$REAPER_RESOURCE/Scripts"
 
 # Step 1: Install uv if needed
 echo ""

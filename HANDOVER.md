@@ -114,9 +114,14 @@
 - Or wait for beat-this v2 / new model release
 - Full results in memory file project_coreml_onnx_results.md
 
-### Priority 4: Distribution
-- ReaPack integration (auto-install + auto-update Lua)
-- PyInstaller binary (eliminate Python dependency)
+### Priority 4: JUCE native extension (long-term, requires deep research first)
+- Port ReaBeat to C++ REAPER extension (JUCE + ONNX Runtime)
+- Eliminates Python, server, TCP - single DLL/dylib, ~40-80MB
+- Foundation: beat_this_cpp (1,370 lines C++, MIT, github.com/mosynthkey/beat_this_cpp)
+- Reference: ReaWwise (JUCE REAPER extension, github.com/audiokinetic/ReaWwise)
+- Distribution via ReaPack (auto-install)
+- REQUIRES deep research before implementation - read memory file project_juce_roadmap.md
+- Current Lua+Python version should be maintained in parallel
 
 ### Priority 5: reamix.me
 - ReaBeat is the community funnel toward reamix.me

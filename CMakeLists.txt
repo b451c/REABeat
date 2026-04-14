@@ -107,6 +107,7 @@ target_compile_definitions(reaper_reabeat PRIVATE
   $<$<NOT:$<PLATFORM_ID:Windows>>:SWELL_PROVIDED_BY_APP>
   $<$<PLATFORM_ID:Windows>:NOMINMAX>
   $<$<PLATFORM_ID:Windows>:WIN32_LEAN_AND_MEAN>
+  $<$<PLATFORM_ID:Linux>:JUCE_USE_XSHM=0>
   $<$<CONFIG:Debug>:REABEAT_DEBUG>
 )
 

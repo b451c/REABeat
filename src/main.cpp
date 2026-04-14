@@ -7,12 +7,19 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "DockableWindow.h"
+#include "PluginWindow.h"
 
 #include <memory>
 
 // --- Globals ---
 
+// Linux: use standalone JUCE window (SWELL HWND→X11 embedding doesn't work reliably)
+// macOS/Windows: use dockable SWELL dialog with embedded JUCE component
+#if defined(__linux__) || defined(__FreeBSD__)
+static std::unique_ptr<PluginWindow> g_pluginWindow;
+#else
 static std::unique_ptr<DockableWindow> g_window;
+#endif
 static int g_cmdToggle = 0;
 static bool g_juceInitialised = false;
 
@@ -38,6 +45,16 @@ static bool onAction(int command, int)
         g_juceInitialised = true;
     }
 
+#if defined(__linux__) || defined(__FreeBSD__)
+    if (!g_pluginWindow)
+    {
+        auto* content = new MainComponent();
+        g_pluginWindow = std::make_unique<PluginWindow>("ReaBeat", content);
+        g_pluginWindow->setVisible(true);
+        return true;
+    }
+    g_pluginWindow->setVisible(!g_pluginWindow->isVisible());
+#else
     if (!g_window)
     {
         g_window = std::make_unique<DockableWindow>();
@@ -51,8 +68,8 @@ static bool onAction(int command, int)
         }
         return true;
     }
-
     g_window->toggleVisibility();
+#endif
 
     return true;
 }
@@ -63,8 +80,13 @@ static int toggleActionState(int command)
 {
     if (command == g_cmdToggle)
     {
+#if defined(__linux__) || defined(__FreeBSD__)
+        if (g_pluginWindow && g_pluginWindow->isVisible())
+            return 1;
+#else
         if (g_window && g_window->isVisible())
             return 1;
+#endif
         return 0;
     }
     return -1;
@@ -74,7 +96,11 @@ static int toggleActionState(int command)
 
 static void onExit()
 {
+#if defined(__linux__) || defined(__FreeBSD__)
+    g_pluginWindow.reset();
+#else
     g_window.reset();
+#endif
 
     if (g_juceInitialised)
     {

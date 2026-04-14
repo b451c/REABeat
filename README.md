@@ -155,9 +155,9 @@ The Lua/Python version is preserved on the [`v1-lua` branch](https://github.com/
 
 If ReaBeat saves you time, consider supporting development:
 
-- [Ko-fi](https://ko-fi.com/b4s1c)
-- [Buy Me a Coffee](https://buymeacoffee.com/b4s1c)
-- [PayPal](https://paypal.me/bartoszsroczynski)
+- [Ko-fi](https://ko-fi.com/quickmd)
+- [Buy Me a Coffee](https://buymeacoffee.com/bsroczynskh)
+- [PayPal](https://www.paypal.com/paypalme/b451c)
 
 ## License
 

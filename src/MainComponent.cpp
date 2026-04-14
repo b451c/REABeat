@@ -1379,9 +1379,9 @@ void MainComponent::buttonClicked(juce::Button* button)
         juce::URL url;
         switch (choice)
         {
-            case 1: url = juce::URL("https://ko-fi.com/b4s1c"); break;
-            case 2: url = juce::URL("https://buymeacoffee.com/b4s1c"); break;
-            case 3: url = juce::URL("https://paypal.me/bartoszsroczynski"); break;
+            case 1: url = juce::URL("https://ko-fi.com/quickmd"); break;
+            case 2: url = juce::URL("https://buymeacoffee.com/bsroczynskh"); break;
+            case 3: url = juce::URL("https://www.paypal.com/paypalme/b451c"); break;
             case 4: url = juce::URL("https://github.com/b451c/ReaBeat"); break;
             default: return;
         }

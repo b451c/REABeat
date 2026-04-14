@@ -10,13 +10,13 @@ Neural beat detection and tempo mapping for [REAPER](https://www.reaper.fm/). St
 
 ![ReaBeat 2.0](images/baner.png)
 
-![ReaBeat in action](images/ReaBeat_3.0.png)
-
 ## Why ReaBeat?
 
 REAPER has no built-in beat detection. ReaBeat adds it as a native extension: one file in UserPlugins, zero dependencies. It uses [beat-this](https://github.com/CPJKU/beat_this) (CPJKU, ISMIR 2024) - the neural network with the best published F1 scores for beat and downbeat tracking.
 
 **No Python. No server. No installer. Drop one file, detect beats.**
+
+![ReaBeat in action](images/ReaBeat_3.0.png)
 
 ## Features
 

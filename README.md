@@ -92,6 +92,16 @@ Download the latest binary for your platform from [Releases](https://github.com/
 
 Restart REAPER after installing.
 
+### Linux Requirements
+
+Linux users may need to install graphics drivers and curl if not already present:
+
+```bash
+sudo apt install mesa-utils libcurl4
+```
+
+`mesa-utils` provides the OpenGL context JUCE needs for rendering. `libcurl4` is required for model auto-download. Most desktop Linux distributions have these pre-installed.
+
 ### First Run
 
 On first detection, ReaBeat downloads the neural network model (~79MB) to `~/.reabeat/models/`. This happens once - subsequent detections use the cached model.

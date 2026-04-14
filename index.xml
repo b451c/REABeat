@@ -45,4 +45,14 @@ State-of-the-art beat detection powered by beat-this (CPJKU, ISMIR 2024).\line
       </version>
     </reapack>
   </category>
+  <category name="Toolbar Icons">
+    <reapack name="ReaBeat toolbar icon" type="data" desc="Toolbar icon for ReaBeat extension">
+      <version name="2.0.0" author="b451c" time="2026-04-14T00:00:00Z">
+        <changelog><![CDATA[Toolbar icon for ReaBeat (100%, 150%, 200% DPI)]]></changelog>
+        <source file="toolbar_icons/ReaBeat.png">https://raw.githubusercontent.com/b451c/ReaBeat/main/images/icons/reaper/ReaBeat.png</source>
+        <source file="toolbar_icons/150/ReaBeat.png">https://raw.githubusercontent.com/b451c/ReaBeat/main/images/icons/reaper/150/ReaBeat.png</source>
+        <source file="toolbar_icons/200/ReaBeat.png">https://raw.githubusercontent.com/b451c/ReaBeat/main/images/icons/reaper/200/ReaBeat.png</source>
+      </version>
+    </reapack>
+  </category>
 </index>

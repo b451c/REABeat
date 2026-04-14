@@ -161,6 +161,12 @@ elseif(WIN32)
     PREFIX ""
     OUTPUT_NAME "reaper_reabeat-x64"
   )
+  # Delay-load onnxruntime.dll so we can pre-load it from UserPlugins
+  # before Windows resolves it from System32 (where v1.17 may exist)
+  if(ORT_FOUND)
+    target_link_options(reaper_reabeat PRIVATE /DELAYLOAD:onnxruntime.dll)
+    target_link_libraries(reaper_reabeat PRIVATE delayimp)
+  endif()
 
 elseif(UNIX)
   if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")

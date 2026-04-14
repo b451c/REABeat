@@ -137,6 +137,34 @@ REAPER_PLUGIN_DLL_EXPORT int ReaperPluginEntry(
     if (REAPERAPI_LoadAPI(rec->GetFunc) != 0)
         return 0;
 
+#ifdef _WIN32
+    // Pre-load onnxruntime.dll from our DLL's directory (UserPlugins)
+    // before delay-load resolves it from System32 where v1.17 may exist
+    {
+        wchar_t selfPath[MAX_PATH] = {};
+        HMODULE hSelf = nullptr;
+        GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+                           GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                           (LPCWSTR)ReaperPluginEntry, &hSelf);
+        if (hSelf && GetModuleFileNameW(hSelf, selfPath, MAX_PATH))
+        {
+            // Remove filename, keep directory
+            for (int i = (int)wcslen(selfPath) - 1; i >= 0; --i)
+            {
+                if (selfPath[i] == L'\\' || selfPath[i] == L'/')
+                {
+                    selfPath[i + 1] = 0;
+                    break;
+                }
+            }
+            wchar_t ortPath[MAX_PATH] = {};
+            wcscpy_s(ortPath, selfPath);
+            wcscat_s(ortPath, L"onnxruntime.dll");
+            LoadLibraryW(ortPath);
+        }
+    }
+#endif
+
     // Register timer for JUCE message pump (always running, lightweight when JUCE not init)
     rec->Register("timer", (void*)(void(*)())juceMessagePump);
 

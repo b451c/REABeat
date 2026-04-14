@@ -137,6 +137,12 @@ if(APPLE)
     OUTPUT_NAME "reaper_reabeat-${ARCH_NAME}"
   )
 
+  # Set rpath to look for dylibs next to the plugin binary
+  set_target_properties(reaper_reabeat PROPERTIES
+    BUILD_RPATH "@loader_path"
+    INSTALL_RPATH "@loader_path"
+  )
+
   target_link_libraries(reaper_reabeat PRIVATE
     "-framework AppKit"
     "-framework CoreFoundation"

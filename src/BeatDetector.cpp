@@ -11,7 +11,9 @@
 #include "InferenceProcessor.h"
 #endif
 
-#include <juce_audio_formats/juce_audio_formats.h>
+#include "reaper_plugin.h"
+#include "reaper_plugin_functions.h"
+#include <juce_audio_basics/juce_audio_basics.h>
 #include <chrono>
 #include <cmath>
 #include <numeric>
@@ -327,43 +329,72 @@ DetectionResult BeatDetector::detect(const std::vector<float>& audioMono,
 DetectionResult BeatDetector::detectFile(const std::string& filePath,
                                           std::function<void(const std::string&, float)> progressCb)
 {
-    juce::AudioFormatManager formatManager;
-    formatManager.registerBasicFormats();
+    // Use REAPER API to read audio — supports ALL formats REAPER can open
+    // (mp3, flac, ogg, opus, aac, wav, aiff, wma, etc.)
+    if (!PCM_Source_CreateFromFile)
+    {
+        DetectionResult result;
+        result.error = "REAPER API not available";
+        return result;
+    }
 
-    juce::File file(filePath);
-    std::unique_ptr<juce::AudioFormatReader> reader(formatManager.createReaderFor(file));
-
-    if (!reader)
+    PCM_source* source = PCM_Source_CreateFromFile(filePath.c_str());
+    if (!source)
     {
         DetectionResult result;
         result.error = "Cannot read audio file: " + filePath;
         return result;
     }
 
-    auto numSamples = static_cast<int>(reader->lengthInSamples);
-    auto sampleRate = static_cast<int>(reader->sampleRate);
-    auto numChannels = static_cast<int>(reader->numChannels);
+    auto sampleRate = static_cast<int>(source->GetSampleRate());
+    auto numChannels = source->GetNumChannels();
+    auto lengthSec = source->GetLength();
+    auto numSamples = static_cast<int>(lengthSec * sampleRate);
 
-    // Read all samples
-    juce::AudioBuffer<float> buffer(numChannels, numSamples);
-    reader->read(&buffer, 0, numSamples, 0, true, numChannels > 1);
+    if (sampleRate < 1 || numSamples < 1)
+    {
+        delete source;
+        DetectionResult result;
+        result.error = "Invalid audio source (MIDI or empty)";
+        return result;
+    }
+
+    // Read all samples via REAPER's decoders
+    std::vector<ReaSample> buffer(static_cast<size_t>(numSamples) * numChannels);
+
+    PCM_source_transfer_t transfer = {};
+    transfer.time_s = 0.0;
+    transfer.samplerate = sampleRate;
+    transfer.nch = numChannels;
+    transfer.length = numSamples;
+    transfer.samples = buffer.data();
+
+    source->GetSamples(&transfer);
+    delete source;
+
+    int samplesRead = transfer.samples_out;
+    if (samplesRead < 1)
+    {
+        DetectionResult result;
+        result.error = "Failed to read audio samples";
+        return result;
+    }
 
     // Convert to mono
-    std::vector<float> mono(numSamples);
+    std::vector<float> mono(samplesRead);
     if (numChannels == 1)
     {
-        auto* data = buffer.getReadPointer(0);
-        std::copy(data, data + numSamples, mono.begin());
+        for (int i = 0; i < samplesRead; ++i)
+            mono[i] = static_cast<float>(buffer[i]);
     }
     else
     {
-        // Average channels
-        for (int i = 0; i < numSamples; ++i)
+        for (int i = 0; i < samplesRead; ++i)
         {
-            float sum = 0;
+            double sum = 0;
             for (int ch = 0; ch < numChannels; ++ch)
-                sum += buffer.getSample(ch, i);
-            mono[i] = sum / numChannels;
+                sum += buffer[static_cast<size_t>(i) * numChannels + ch];
+            mono[i] = static_cast<float>(sum / numChannels);
         }
     }
 

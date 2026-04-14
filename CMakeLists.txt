@@ -101,7 +101,8 @@ target_compile_definitions(reaper_reabeat PRIVATE
   JUCE_MODAL_LOOPS_PERMITTED=1
   JUCE_GLOBAL_MODULE_SETTINGS_INCLUDED=1
   JUCE_WEB_BROWSER=0
-  JUCE_USE_CURL=0
+  $<$<PLATFORM_ID:Linux>:JUCE_USE_CURL=1>
+  $<$<NOT:$<PLATFORM_ID:Linux>>:JUCE_USE_CURL=0>
   WDL_NO_DEFINE_MINMAX
   REABEAT_VERSION="${PROJECT_VERSION}"
   $<$<NOT:$<PLATFORM_ID:Windows>>:SWELL_PROVIDED_BY_APP>
@@ -177,7 +178,7 @@ elseif(UNIX)
   set_target_properties(reaper_reabeat PROPERTIES
     LINK_FLAGS "-Wl,-rpath,$ORIGIN"
   )
-  target_link_libraries(reaper_reabeat PRIVATE dl pthread)
+  target_link_libraries(reaper_reabeat PRIVATE dl pthread curl)
 
   # SWELL mod stub for Linux (REAPER provides SWELL implementation)
   target_sources(reaper_reabeat PRIVATE

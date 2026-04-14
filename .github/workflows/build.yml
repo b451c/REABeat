@@ -74,7 +74,7 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libfreetype6-dev libx11-dev libxrandr-dev libxcursor-dev libxinerama-dev libasound2-dev libwebkit2gtk-4.0-dev
+          sudo apt-get install -y libfreetype6-dev libx11-dev libxrandr-dev libxcursor-dev libxinerama-dev libasound2-dev libwebkit2gtk-4.0-dev libcurl4-openssl-dev
 
       - name: Configure
         run: |

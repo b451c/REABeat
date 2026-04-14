@@ -30,7 +30,13 @@ bool BeatDetector::loadModel(const std::string& modelPath)
         opts.SetIntraOpNumThreads(4);
         opts.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_ALL);
 
+#ifdef _WIN32
+        // ONNX Runtime on Windows requires wide string path
+        std::wstring widePath(modelPath.begin(), modelPath.end());
+        session_ = std::make_unique<Ort::Session>(*env_, widePath.c_str(), opts);
+#else
         session_ = std::make_unique<Ort::Session>(*env_, modelPath.c_str(), opts);
+#endif
         modelLoaded_ = true;
         return true;
     }

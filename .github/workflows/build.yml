@@ -5,9 +5,6 @@ on:
     tags:
       - 'v*'
 
-env:
-  ORT_VERSION: "1.21.1"
-
 jobs:
   build:
     strategy:
@@ -18,28 +15,28 @@ jobs:
             platform: macOS-arm64
             artifact: reaper_reabeat-arm64.dylib
             cmake_flags: -DCMAKE_OSX_ARCHITECTURES=arm64
-            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.21.1/onnxruntime-osx-arm64-1.21.1.tgz
+            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-osx-arm64-1.24.4.tgz
             ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: macos-13
             platform: macOS-x86_64
             artifact: reaper_reabeat-x86_64.dylib
             cmake_flags: -DCMAKE_OSX_ARCHITECTURES=x86_64
-            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.21.1/onnxruntime-osx-x86_64-1.21.1.tgz
+            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-osx-x86_64-1.20.1.tgz
             ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: windows-latest
             platform: Windows-x64
             artifact: reaper_reabeat-x64.dll
             cmake_flags: -A x64
-            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.21.1/onnxruntime-win-x64-1.21.1.zip
+            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-win-x64-1.24.4.zip
             ort_extract: ""
 
           - os: ubuntu-22.04
             platform: Linux-x86_64
             artifact: reaper_reabeat-x86_64.so
             cmake_flags: ""
-            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.21.1/onnxruntime-linux-x64-1.21.1.tgz
+            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-linux-x64-1.24.4.tgz
             ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
     runs-on: ${{ matrix.os }}

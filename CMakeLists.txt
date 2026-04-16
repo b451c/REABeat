@@ -141,9 +141,12 @@ if(APPLE)
   )
 
   # Set rpath to look for dylibs next to the plugin binary
+  # SKIP_BUILD_RPATH=OFF + BUILD_RPATH_USE_ORIGIN=OFF + explicit BUILD_RPATH
+  # prevents CMake from adding the ORT vendor path as an extra RPATH entry
   set_target_properties(reaper_reabeat PROPERTIES
     BUILD_RPATH "@loader_path"
     INSTALL_RPATH "@loader_path"
+    BUILD_WITH_INSTALL_RPATH ON
   )
 
   target_link_libraries(reaper_reabeat PRIVATE

@@ -50,6 +50,26 @@ State-of-the-art beat detection powered by beat-this (CPJKU, ISMIR 2024).\line
         <source platform="linux-aarch64" file="reaper_reabeat-aarch64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.0/reaper_reabeat-aarch64.so</source>
         <source platform="linux-aarch64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.0/libonnxruntime.so.1-Linux-aarch64</source>
       </version>
+      <version name="2.0.1" author="b451c" time="2026-04-17T00:00:00Z">
+        <changelog><![CDATA[ReaBeat 2.0.1 - Cross-platform fixes
+
+- Dockable window on all platforms (Linux XBridge, Windows dual-mode)
+- Async model download (UI no longer freezes during 79MB download)
+- macOS rpath fix (CI build path no longer leaks into binary)
+- ARM build fix (-fsigned-char)
+- Windows ORT pre-load via shlwapi
+- Removed debug logging]]></changelog>
+        <source platform="darwin-arm64" file="reaper_reabeat-arm64.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-arm64.dylib</source>
+        <source platform="darwin-arm64" file="libonnxruntime.1.24.4.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/libonnxruntime-macOS-arm64.dylib</source>
+        <source platform="darwin64" file="reaper_reabeat-x86_64.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-x86_64.dylib</source>
+        <source platform="darwin64" file="libonnxruntime.1.20.1.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/libonnxruntime-macOS-x86_64.dylib</source>
+        <source platform="win64" file="reaper_reabeat-x64.dll">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-x64.dll</source>
+        <source platform="win64" file="onnxruntime.dll">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/onnxruntime.dll</source>
+        <source platform="linux64" file="reaper_reabeat-x86_64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-x86_64.so</source>
+        <source platform="linux64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/libonnxruntime.so.1-Linux-x86_64</source>
+        <source platform="linux-aarch64" file="reaper_reabeat-aarch64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-aarch64.so</source>
+        <source platform="linux-aarch64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/libonnxruntime.so.1-Linux-aarch64</source>
+      </version>
     </reapack>
   </category>
   <category name="Toolbar Icons">

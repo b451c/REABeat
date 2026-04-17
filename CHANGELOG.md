@@ -2,6 +2,20 @@
 
 All notable changes to ReaBeat are documented here. Based on [Keep a Changelog](https://keepachangelog.com/). Adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.1] - 2026-04-17
+
+Cross-platform fixes and improvements.
+
+### Fixed
+- **Dockable window on all platforms** - Linux uses SWELL_CreateXBridgeWindow, Windows uses dual-mode Win32 dialog (WS_CHILD for docked, WS_POPUP for floating)
+- **macOS rpath** - CI build path no longer leaks into binary (fixes Intel Mac loading)
+- **Async model download** - UI stays responsive during 79MB model download
+- **ARM build** - `-fsigned-char` flag (WDL/SWELL assumes signed char)
+- **Windows ORT pre-load** - cleaner delay-load via shlwapi (prevents System32 v1.17 conflict)
+- **Debug logging removed** - no more `/tmp/reabeat_debug.log` on Linux
+
+---
+
 ## [2.0.0] - 2026-04-14
 
 Complete rewrite as native C++ REAPER extension. No Python, no server, no installer.

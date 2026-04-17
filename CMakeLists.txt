@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
 if(APPLE)
-  project(reaper_reabeat VERSION 2.0.0 LANGUAGES C CXX OBJCXX)
+  project(reaper_reabeat VERSION 2.0.1 LANGUAGES C CXX OBJCXX)
 else()
-  project(reaper_reabeat VERSION 2.0.0 LANGUAGES C CXX)
+  project(reaper_reabeat VERSION 2.0.1 LANGUAGES C CXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)

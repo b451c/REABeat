@@ -1,26 +1,61 @@
 #include "ModelManager.h"
 #include <juce_core/juce_core.h>
 
-std::string ModelManager::getModelDir()
-{
-#if defined(__APPLE__)
-    auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
-#elif defined(_WIN32)
-    auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+#ifdef _WIN32
+  #include <windows.h>
 #else
-    auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+  #include <dlfcn.h>
 #endif
 
+// Resolve the directory containing this plugin binary. Used to look for
+// a portable model file next to the plugin (UserPlugins / portable REAPER).
+static juce::File getPluginDirectory()
+{
+#ifdef _WIN32
+    HMODULE hSelf = nullptr;
+    GetModuleHandleExW(
+        GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+        GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+        (LPCWSTR)&getPluginDirectory, &hSelf);
+    if (!hSelf) return {};
+    wchar_t buf[MAX_PATH] = {};
+    if (GetModuleFileNameW(hSelf, buf, MAX_PATH) == 0) return {};
+    return juce::File(juce::String(buf)).getParentDirectory();
+#else
+    Dl_info info{};
+    if (dladdr((void*)&getPluginDirectory, &info) && info.dli_fname)
+        return juce::File(juce::String::fromUTF8(info.dli_fname)).getParentDirectory();
+    return {};
+#endif
+}
+
+std::string ModelManager::getModelDir()
+{
+    auto home = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
     return home.getChildFile(".reabeat").getChildFile("models").getFullPathName().toStdString();
 }
 
 std::string ModelManager::getModelPath()
 {
-    auto dir = getModelDir();
-    auto path = juce::File(dir).getChildFile(kModelFilename).getFullPathName().toStdString();
+    // Search order:
+    //   1. Plugin directory (portable: UserPlugins/beat_this_final0.onnx)
+    //   2. Plugin directory / "ReaBeat" / "models" subfolder (organized portable)
+    //   3. ~/.reabeat/models/ (auto-download default)
+    auto pluginDir = getPluginDirectory();
+    if (pluginDir != juce::File())
+    {
+        auto flat = pluginDir.getChildFile(kModelFilename);
+        if (flat.existsAsFile())
+            return flat.getFullPathName().toStdString();
 
-    if (juce::File(path).existsAsFile())
-        return path;
+        auto sub = pluginDir.getChildFile("ReaBeat").getChildFile("models").getChildFile(kModelFilename);
+        if (sub.existsAsFile())
+            return sub.getFullPathName().toStdString();
+    }
+
+    auto home = juce::File(getModelDir()).getChildFile(kModelFilename);
+    if (home.existsAsFile())
+        return home.getFullPathName().toStdString();
 
     return {};
 }

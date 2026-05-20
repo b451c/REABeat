@@ -52,7 +52,7 @@ REAPER has no built-in beat detection. ReaBeat adds it as a native extension: on
 - Single Ctrl+Z undoes the entire operation
 
 ### Quality
-- **Onset refinement** - snaps each beat to nearest audio transient (+/-30ms, sample-level precision)
+- **Onset refinement** - snaps each beat to nearest audio transient (+/-30ms, sample-level precision). Currently disabled past 10 minutes of audio to avoid a multi-gigabyte spectral buffer; the neural model alone still gives ~20 ms precision in that case. A streaming rewrite that lifts the length cap is on the [roadmap](docs/roadmap.md).
 - **Beat interpolation** - fills gaps in quiet sections using sub-threshold model hints
 - **Consistency pass** - removes isolated false-positive beats
 - **Octave correction** - [/2] [x2] buttons, 78-185 BPM range

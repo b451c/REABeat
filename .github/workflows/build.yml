@@ -104,11 +104,17 @@ jobs:
 
       - name: Bundle ONNX Runtime (Unix)
         run: |
+          # -maxdepth 1 stops find from descending into the .dSYM/ directory.
+          # macOS ORT tarballs ship a DWARF file with the SAME name as the
+          # real library at <lib>.dSYM/Contents/Resources/DWARF/<libname>;
+          # without the depth cap, find matches both and the second cp wins
+          # in undefined order. For 1.16.3 that produced a 7.5 MB dSYM file
+          # being shipped as the runtime, which the plugin couldn't load.
           if [ "$RUNNER_OS" = "Linux" ]; then
-            find vendor/onnxruntime/lib -name "libonnxruntime.so.*.*.*" ! -type l \
+            find vendor/onnxruntime/lib -maxdepth 1 -name "libonnxruntime.so.*.*.*" ! -type l \
               -exec cp {} "build/libonnxruntime.so.1-${{ matrix.platform }}" \;
           elif [ "$RUNNER_OS" = "macOS" ]; then
-            find vendor/onnxruntime/lib -name "libonnxruntime.*.*.*.dylib" ! -type l \
+            find vendor/onnxruntime/lib -maxdepth 1 -name "libonnxruntime.*.*.*.dylib" ! -type l \
               -exec cp {} "build/libonnxruntime-${{ matrix.platform }}.dylib" \;
           fi
         shell: bash

@@ -1,14 +1,26 @@
 cmake_minimum_required(VERSION 3.22)
 
+# Use CMAKE_MSVC_RUNTIME_LIBRARY to pick the CRT (statically linked MT).
+# Must be NEW before any target is created.
+cmake_policy(SET CMP0091 NEW)
+
 if(APPLE)
-  project(reaper_reabeat VERSION 2.0.1 LANGUAGES C CXX OBJCXX)
+  project(reaper_reabeat VERSION 2.0.2 LANGUAGES C CXX OBJCXX)
 else()
-  project(reaper_reabeat VERSION 2.0.1 LANGUAGES C CXX)
+  project(reaper_reabeat VERSION 2.0.2 LANGUAGES C CXX)
 endif()
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Statically link the MSVC C/C++ runtime so the plugin doesn't require
+# the user to install the Visual C++ Redistributable separately.
+# MUST be set before any add_library/add_subdirectory so JUCE targets
+# pick up the same runtime.
+if(MSVC)
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
 
 # --- Dependencies ---
 
@@ -113,10 +125,9 @@ target_compile_definitions(reaper_reabeat PRIVATE
   $<$<CONFIG:Debug>:REABEAT_DEBUG>
 )
 
-# Compiler warnings
+# Compiler warnings (MSVC runtime selection is done globally at top of file)
 if(MSVC)
   target_compile_options(reaper_reabeat PRIVATE /W3)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
   target_compile_options(reaper_reabeat PRIVATE
     -Wall -Wextra -Wno-unused-parameter -Wno-missing-field-initializers

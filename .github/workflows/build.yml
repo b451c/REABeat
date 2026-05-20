@@ -22,7 +22,10 @@ jobs:
             platform: macOS-x86_64
             artifact: reaper_reabeat-x86_64.dylib
             cmake_flags: -DCMAKE_OSX_ARCHITECTURES=x86_64 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.15
-            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-osx-x86_64-1.20.1.tgz
+            # ORT 1.16.3 is the last release that runs on macOS 10.15 (Catalina).
+            # Later versions (1.17+) require macOS 11.0+; 1.20+ requires 13.3+.
+            # Bump this when Catalina support is dropped.
+            ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-osx-x86_64-1.16.3.tgz
             ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: windows-latest

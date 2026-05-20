@@ -7,7 +7,11 @@
 // Layout
 static constexpr float kRulerH = 16.0f;
 static constexpr float kScrollH = 3.0f;
-static constexpr float kBeatHitPx = 8.0f;
+// Hit-test radius around a beat / stretch marker line in pixels.
+// 8 px was too tight in clustered passages (fast BPM at low zoom) - users
+// reported beats that wouldn't grab unless you clicked exactly on the line.
+// 12 px keeps a reasonable click target without making picking ambiguous.
+static constexpr float kBeatHitPx = 12.0f;
 static constexpr double kMinViewSec = 0.5;
 
 // Theme - matches ReaBeat dark + gold
@@ -559,6 +563,7 @@ void WaveformView::paint(juce::Graphics& g)
 
     // ---- Gap highlighting (missing beats) ----
     // Highlight intervals > 1.35x median as potential problems
+    bool hasGaps = false;
     if (!markerEditMode_ && beats_.size() >= 4)
     {
         // Compute median beat interval
@@ -576,6 +581,7 @@ void WaveformView::paint(juce::Graphics& g)
         {
             float gap = beats_[i] - beats_[i - 1];
             if (gap <= gapThresh) continue;
+            hasGaps = true;
 
             float x1 = timeToX(beats_[i - 1]);
             float x2 = timeToX(beats_[i]);
@@ -588,11 +594,12 @@ void WaveformView::paint(juce::Graphics& g)
             g.setColour(juce::Colour(0x18d94848));
             g.fillRect(x1, 0.0f, x2 - x1, waveH);
 
-            // Suggest where missing beats should be (at RMS peak positions)
+            // Suggest where missing beats should be (at RMS peak positions).
+            // Bright teal (high contrast vs red gap tint) so the lines stay readable.
             int nMissing = std::max(1, static_cast<int>(std::round(gap / median)) - 1);
             float spacing = gap / static_cast<float>(nMissing + 1);
 
-            g.setColour(juce::Colour(0x40d94848));
+            g.setColour(juce::Colour(0xc080e0d0));
             float dash = 3.0f;
 
             for (int m = 1; m <= nMissing; ++m)
@@ -985,6 +992,22 @@ void WaveformView::paint(juce::Graphics& g)
         g.drawText(modeText, static_cast<int>(bx), static_cast<int>(by),
                    static_cast<int>(bw), static_cast<int>(bh),
                    juce::Justification::centred, false);
+
+        // Hint about N shortcut: only show when there are gaps to jump to.
+        if (hasGaps && !markerEditMode_)
+        {
+            juce::String hint = "Press N for next gap";
+            g.setFont(juce::FontOptions(10.0f));
+            juce::GlyphArrangement gah;
+            gah.addLineOfText(g.getCurrentFont(), hint, 0, 0);
+            float hw = gah.getBoundingBox(0, -1, false).getWidth();
+            float hx = w - hw - 16.0f;
+            float hy = by + bh + 4.0f;
+            g.setColour(juce::Colour(0xa0808080));
+            g.drawText(hint, static_cast<int>(hx), static_cast<int>(hy),
+                       static_cast<int>(hw + 4.0f), 14,
+                       juce::Justification::centredRight, false);
+        }
     }
 
     // ---- Gold border in marker edit mode ----

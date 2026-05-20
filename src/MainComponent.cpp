@@ -121,8 +121,10 @@ public:
                 if (auto* owner = safe.getComponent())
                 {
                     char msg[64];
-                    snprintf(msg, sizeof(msg), "Downloading model... %d%%",
+                    snprintf(msg, sizeof(msg), "Downloading model: %d%%",
                              static_cast<int>(progress * 100));
+                    owner->progressValue = progress;
+                    owner->progressLabel.setText(msg, juce::dontSendNotification);
                     owner->setStatus(msg, Colors::warning);
                 }
             });
@@ -178,6 +180,7 @@ MainComponent::MainComponent()
     detectButton.setColour(juce::TextButton::textColourOnId, juce::Colour(0xff1e1e1e));
     detectButton.addListener(this);
     detectButton.setEnabled(false);
+    detectButton.setTooltip("Run neural beat detection on the selected audio item");
     addAndMakeVisible(detectButton);
 
     // Waveform
@@ -946,7 +949,10 @@ void MainComponent::updateSelectedItem()
         currentItem_.name = (lastSlash != std::string::npos) ? path.substr(lastSlash + 1) : path;
     }
 
-    std::string displayName = currentItem_.name;
+    // Require an actual audio source - MIDI items and in-project sources have empty audioPath.
+    bool hasAudio = !currentItem_.audioPath.empty();
+
+    std::string displayName = hasAudio ? currentItem_.name : std::string("[No audio source]");
     if (displayName.length() > 40)
         displayName = displayName.substr(0, 37) + "...";
 
@@ -955,8 +961,14 @@ void MainComponent::updateSelectedItem()
     char info[128];
     snprintf(info, sizeof(info), "%s  (%d:%02d)", displayName.c_str(), mins, secs);
     sourceLabel.setText(info, juce::dontSendNotification);
-    sourceLabel.setColour(juce::Label::textColourId, Colors::text);
-    detectButton.setEnabled(modelLoaded_ && !detecting_);
+    sourceLabel.setColour(juce::Label::textColourId, hasAudio ? Colors::text : Colors::textDim);
+    detectButton.setEnabled(modelLoaded_ && !detecting_ && hasAudio);
+    if (!hasAudio)
+        detectButton.setTooltip("Selected item has no audio source (MIDI or empty)");
+    else if (!modelLoaded_)
+        detectButton.setTooltip("Model not loaded - check status bar");
+    else
+        detectButton.setTooltip("Run neural beat detection on the selected audio item");
 
     auto it = cache_.find(guid);
     if (it != cache_.end())
@@ -1276,6 +1288,10 @@ void MainComponent::applyAction()
                         userBpm, target, target / userBpm);
                     setStatus(msg, Colors::success);
                 }
+                else
+                {
+                    setStatus("Match tempo failed - check item selection", Colors::error);
+                }
             }
             break;
         }
@@ -1311,6 +1327,10 @@ void MainComponent::applyAction()
                 char msg[64];
                 snprintf(msg, sizeof(msg), "Inserted %d tempo marker(s)", cnt);
                 setStatus(msg, Colors::success);
+            }
+            else
+            {
+                setStatus("No tempo markers inserted - check detection results", Colors::error);
             }
             break;
         }
@@ -1357,6 +1377,18 @@ void MainComponent::applyAction()
                 setStatus(msg, Colors::success);
                 lastStretchMarkerCount_ = -1; // force re-read
                 waveformView.setMarkerEditMode(true);
+            }
+            else if (beatList.empty())
+            {
+                setStatus(downbeatsOnly
+                    ? "No downbeats detected - try 'Every beat' mode"
+                    : "No beats detected - run detection first",
+                    Colors::error);
+            }
+            else
+            {
+                setStatus("Failed to insert stretch markers - check item state",
+                          Colors::error);
             }
             break;
         }
@@ -1640,6 +1672,14 @@ void MainComponent::loadOrDownloadModel()
     // Download asynchronously so UI stays responsive
     setStatus("Downloading model (79 MB)...", Colors::warning);
     detectButton.setEnabled(false);
+    detectButton.setButtonText("Downloading model...");
+    detectButton.setTooltip("First-run download of the 79 MB neural network model");
+
+    progressValue = 0.0;
+    progressBar->setVisible(true);
+    progressLabel.setText("Downloading model: 0%", juce::dontSendNotification);
+    progressLabel.setVisible(true);
+    resized();
 
     modelDownloadThread_ = std::make_unique<ModelDownloadThread>(*this);
     modelDownloadThread_->startThread();
@@ -1649,6 +1689,11 @@ void MainComponent::onModelDownloadComplete(bool ok)
 {
     modelDownloadThread_.reset();
 
+    // Always restore button label and hide progress UI after download attempt.
+    detectButton.setButtonText("Detect Beats");
+    progressBar->setVisible(false);
+    progressLabel.setVisible(false);
+
     if (ok)
     {
         auto modelPath = ModelManager::getModelPath();
@@ -1656,7 +1701,8 @@ void MainComponent::onModelDownloadComplete(bool ok)
         {
             modelLoaded_ = true;
             setStatus("Model downloaded - Ready", Colors::success);
-            detectButton.setEnabled(!detecting_);
+            bool hasAudio = !currentItem_.audioPath.empty();
+            detectButton.setEnabled(!detecting_ && hasAudio);
         }
         else
         {
@@ -1665,6 +1711,7 @@ void MainComponent::onModelDownloadComplete(bool ok)
     }
     else
     {
-        setStatus("No model. Place beat_this_final0.onnx in ~/.reabeat/models/", Colors::error);
+        setStatus("Download failed. Place beat_this_final0.onnx in ~/.reabeat/models/ or next to the plugin",
+                  Colors::error);
     }
 }

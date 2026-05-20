@@ -16,7 +16,6 @@ jobs:
             artifact: reaper_reabeat-arm64.dylib
             cmake_flags: -DCMAKE_OSX_ARCHITECTURES=arm64
             ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-osx-arm64-1.24.4.tgz
-            ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: macos-14
             platform: macOS-x86_64
@@ -26,28 +25,24 @@ jobs:
             # Later versions (1.17+) require macOS 11.0+; 1.20+ requires 13.3+.
             # Bump this when Catalina support is dropped.
             ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.16.3/onnxruntime-osx-x86_64-1.16.3.tgz
-            ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: windows-latest
             platform: Windows-x64
             artifact: reaper_reabeat-x64.dll
             cmake_flags: -A x64
             ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-win-x64-1.24.4.zip
-            ort_extract: ""
 
           - os: ubuntu-22.04
             platform: Linux-x86_64
             artifact: reaper_reabeat-x86_64.so
             cmake_flags: ""
             ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-linux-x64-1.24.4.tgz
-            ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
           - os: ubuntu-22.04-arm
             platform: Linux-aarch64
             artifact: reaper_reabeat-aarch64.so
             cmake_flags: ""
             ort_url: https://github.com/microsoft/onnxruntime/releases/download/v1.24.4/onnxruntime-linux-aarch64-1.24.4.tgz
-            ort_extract: tar xz --strip-components=1 -C vendor/onnxruntime
 
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.platform }}
@@ -60,8 +55,20 @@ jobs:
       - name: Download ONNX Runtime (Unix)
         if: runner.os != 'Windows'
         run: |
-          mkdir -p vendor/onnxruntime
-          curl -L ${{ matrix.ort_url }} | ${{ matrix.ort_extract }}
+          mkdir -p vendor/onnxruntime /tmp/ort-extract
+          curl -sL "${{ matrix.ort_url }}" -o /tmp/ort.tgz
+          tar -xzf /tmp/ort.tgz -C /tmp/ort-extract
+          # Archive layout differs by ORT version: 1.16.3 ships entries with a
+          # leading "./" so --strip-components=1 leaves the version dir behind,
+          # while 1.20+ omit it. Find the inner ORT dir and flatten regardless.
+          ORT_INNER=$(find /tmp/ort-extract -mindepth 1 -maxdepth 2 -type d -name "onnxruntime-*" | head -1)
+          if [ -z "$ORT_INNER" ]; then
+            echo "ERROR: no onnxruntime-* directory found in archive"
+            ls -la /tmp/ort-extract
+            exit 1
+          fi
+          cp -R "$ORT_INNER"/* vendor/onnxruntime/
+          rm -rf /tmp/ort-extract /tmp/ort.tgz
 
       - name: Download ONNX Runtime (Windows)
         if: runner.os == 'Windows'

@@ -316,18 +316,33 @@ int ReaperActions::insertTempoMap(
     Undo_BeginBlock2(nullptr);
     RefreshGuard refreshGuard;
 
-    // Clear existing tempo markers (always replace - Ctrl+Z to undo)
-    int existing = CountTempoTimeSigMarkers(nullptr);
-    if (existing > 0)
-    {
-        for (int i = existing - 1; i >= 0; --i)
-            DeleteTempoTimeSigMarker(nullptr, i);
-    }
-
     double itemPos = GetMediaItemInfo_Value(item, "D_POSITION");
+    double itemLen = GetMediaItemInfo_Value(item, "D_LENGTH");
+    double itemEnd = itemPos + itemLen;
     double takeOffset = GetMediaItemTakeInfo_Value(take, "D_STARTOFFS");
     double playrate = GetMediaItemTakeInfo_Value(take, "D_PLAYRATE");
     double effectiveBpm = tempo * playrate;
+
+    // Lock the item to absolute time before inserting tempo markers, otherwise
+    // a Beats-based item timebase would stretch the audio when the project
+    // grid changes. C_BEATATTACHMODE=0 means "Time" (item position and length
+    // unaffected by tempo changes).
+    char timebase = 0;
+    GetSetMediaItemInfo(item, "C_BEATATTACHMODE", &timebase);
+
+    // Clear existing tempo markers within item time range only.
+    // Markers before/after the item are preserved so the rest of the project
+    // (e.g. other items, manual tempo edits) is not destroyed.
+    int existing = CountTempoTimeSigMarkers(nullptr);
+    for (int i = existing - 1; i >= 0; --i)
+    {
+        double timepos = 0;
+        if (!GetTempoTimeSigMarker(nullptr, i, &timepos,
+                nullptr, nullptr, nullptr, nullptr, nullptr, nullptr))
+            continue;
+        if (timepos >= itemPos - 0.001 && timepos <= itemEnd + 0.001)
+            DeleteTempoTimeSigMarker(nullptr, i);
+    }
 
     int count = 0;
 

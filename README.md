@@ -31,7 +31,7 @@ REAPER has no built-in beat detection. ReaBeat adds it as a native extension: on
 
 ### Three Action Modes
 - **Match Tempo** - adjust playrate to target BPM (pitch preserved). Match to project tempo or to another detected item for multi-track sync.
-- **Insert Tempo Map** - sync REAPER's grid to audio. Constant, variable-bars, or variable-beats.
+- **Insert Tempo Map** - sync REAPER's grid to audio. Constant, variable-bars, or variable-beats. Only tempo markers inside the item are replaced (existing markers elsewhere in the project are preserved), and the item is locked to time so the audio doesn't stretch when the grid changes.
 - **Insert Stretch Markers** - quantize audio to grid with four modes:
   - **Straight** - mathematical grid from detected BPM (default, best for modern music)
   - **Bars** - downbeat subdivision with variable bar lengths (live recordings)
@@ -41,7 +41,7 @@ REAPER has no built-in beat detection. ReaBeat adds it as a native extension: on
 ### Interactive Waveform Editor
 - **Beat editing** - drag, add (double-click), delete (right-click), toggle downbeat
 - **Marker editing** - after Apply, edit individual stretch markers directly in REAPER
-- **Gap highlighting** - red tint over missing-beat regions with suggestion lines
+- **Gap highlighting** - red tint over missing-beat regions with teal suggestion lines at the strongest transients; an on-canvas hint shows the **N** shortcut to jump to the next gap
 - **Seek** - click waveform to set REAPER cursor (accounts for stretch markers)
 - **Zoom/scroll** - mouse wheel, shift+scroll, trackpad swipe
 - **Playhead tracking** - auto-follow during playback
@@ -95,7 +95,9 @@ Download **both files** for your platform from [Releases](https://github.com/b45
 | Download from Release | Save as |
 |-----------------------|---------|
 | `reaper_reabeat-x86_64.dylib` | `reaper_reabeat-x86_64.dylib` |
-| `libonnxruntime-macOS-x86_64.dylib` | `libonnxruntime.1.20.1.dylib` |
+| `libonnxruntime-macOS-x86_64.dylib` | `libonnxruntime.1.16.3.dylib` |
+
+Intel builds bundle ONNX Runtime 1.16.3 - the last release that runs on macOS 10.15 (Catalina) - so older Macs are supported. Apple Silicon builds use ORT 1.24.4 (macOS 11+).
 
 **Windows 64-bit** — `%APPDATA%\REAPER\UserPlugins\`
 
@@ -134,7 +136,11 @@ sudo apt install mesa-utils libcurl4
 
 ### First Run
 
-On first launch, ReaBeat downloads the neural network model (~79MB) to `~/.reabeat/models/`. The **Detect Beats** button is inactive until the download completes. This happens once; subsequent launches use the cached model.
+On first launch, ReaBeat downloads the neural network model (~79MB) to `~/.reabeat/models/`. A progress bar in the plugin window shows the download status; the **Detect Beats** button is replaced with **Downloading model...** until the download completes. This happens once; subsequent launches use the cached model.
+
+**Portable / offline install:** if `~/.reabeat/models/` is not usable (portable REAPER, restricted network), place `beat_this_final0.onnx` directly in your UserPlugins folder next to the plugin binary. ReaBeat will load the model from there and skip the download. The file is available from the [v2.0.0-model release](https://github.com/b451c/ReaBeat/releases/tag/v2.0.0-model).
+
+**Long items:** detection has been tested on 30+ minute drum stems and full-length classical material. Items beyond 10 minutes skip per-transient refinement (which would otherwise demand multi-gigabyte spectral buffers) - the neural model alone already gives ~20 ms beat precision.
 
 ## Usage
 
@@ -219,6 +225,7 @@ Uses [JUCE](https://juce.com/) (AGPL), [ONNX Runtime](https://onnxruntime.ai/) (
 
 ## Links
 
-- [REAPER Forum Thread](https://forum.cockos.com/showthread.php?t=308240)
+- [REAPER Forum Thread (v2)](https://forum.cockos.com/showthread.php?t=308368)
+- [REAPER Forum Thread (v1, Lua/Python)](https://forum.cockos.com/showthread.php?t=308240)
 - [GitHub Repository](https://github.com/b451c/ReaBeat)
 - [beat-this Paper (ISMIR 2024)](https://github.com/CPJKU/beat_this)

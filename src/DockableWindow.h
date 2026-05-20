@@ -143,9 +143,12 @@ private:
 
         if (isDocked_)
         {
-            // Docked: register with REAPER's docker
+            // Docked: register with REAPER's docker and activate the tab so
+            // the user actually sees ReaBeat after toggling it on.
             if (DockWindowAddEx)
                 DockWindowAddEx(hwnd_, "ReaBeat", "ReaBeat_dock", true);
+            if (DockWindowActivate)
+                DockWindowActivate(hwnd_);
         }
         else
         {

@@ -70,6 +70,38 @@ State-of-the-art beat detection powered by beat-this (CPJKU, ISMIR 2024).\line
         <source platform="linux-aarch64" file="reaper_reabeat-aarch64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/reaper_reabeat-aarch64.so</source>
         <source platform="linux-aarch64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.1/libonnxruntime.so.1-Linux-aarch64</source>
       </version>
+      <version name="2.0.2" author="b451c" time="2026-05-20T00:00:00Z">
+        <changelog><![CDATA[ReaBeat 2.0.2 - Forum feedback round
+
+Fixed:
+- Long-file detection crash (Alex S.) - chunked audio read + OnsetRefinement skip past 10 min
+- Plugin not loading on Windows (fightclxb, squibs) - MSVC runtime statically linked
+- Plugin not loading on macOS Catalina (80icio, reaperfreaker) - ORT 1.16.3 for darwin64
+- Apply Stretch Markers silent failure (plush2) - status reports success/error
+- Tempo Map wiping unrelated markers (gkurtenbach) - scoped to item range only
+- Tempo Map stretching source item (Daodan #1) - sets C_BEATATTACHMODE=Time
+- Detect Beats enabled on MIDI items (Mercado_Negro) - disabled with explanation
+
+Added:
+- Visual download progress bar on first-run (Daodan #7)
+- "Press N for next gap" hint on waveform when gaps exist (Daodan #6)
+- Portable model location next to plugin binary (akademie)
+
+Changed:
+- Beat drag hit-test 8 -> 12 px (Daodan #2)
+- Gap suggestion lines red -> teal for contrast (Daodan #3)
+- Docked window auto-activates after AddEx (Daodan #8)]]></changelog>
+        <source platform="darwin-arm64" file="reaper_reabeat-arm64.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/reaper_reabeat-arm64.dylib</source>
+        <source platform="darwin-arm64" file="libonnxruntime.1.24.4.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/libonnxruntime-macOS-arm64.dylib</source>
+        <source platform="darwin64" file="reaper_reabeat-x86_64.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/reaper_reabeat-x86_64.dylib</source>
+        <source platform="darwin64" file="libonnxruntime.1.16.3.dylib">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/libonnxruntime-macOS-x86_64.dylib</source>
+        <source platform="win64" file="reaper_reabeat-x64.dll">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/reaper_reabeat-x64.dll</source>
+        <source platform="win64" file="onnxruntime.dll">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/onnxruntime.dll</source>
+        <source platform="linux64" file="reaper_reabeat-x86_64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/reaper_reabeat-x86_64.so</source>
+        <source platform="linux64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/libonnxruntime.so.1-Linux-x86_64</source>
+        <source platform="linux-aarch64" file="reaper_reabeat-aarch64.so">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/reaper_reabeat-aarch64.so</source>
+        <source platform="linux-aarch64" file="libonnxruntime.so.1">https://github.com/b451c/ReaBeat/releases/download/v2.0.2/libonnxruntime.so.1-Linux-aarch64</source>
+      </version>
     </reapack>
   </category>
   <category name="Toolbar Icons">

@@ -2,6 +2,31 @@
 
 All notable changes to ReaBeat are documented here. Based on [Keep a Changelog](https://keepachangelog.com/). Adheres to [Semantic Versioning](https://semver.org/).
 
+## [2.0.2] - 2026-05-20
+
+Forum feedback round: load failures, long-file crashes, Apply silent failures, UX polish.
+
+### Fixed
+- **Long-file detection crash** (Alex S.) - chunked audio read (60 s blocks instead of one huge allocation) plus `OnsetRefinement` skipped past 10 min. A 90-minute drum stem now detects instead of immediately re-enabling the Detect button after a `bad_alloc`.
+- **Plugin not loading on Windows** (fightclxb, squibs) - MSVC C/C++ runtime is now statically linked, so users no longer need to install the Visual C++ Redistributable separately.
+- **Plugin not loading on macOS Catalina / Intel** (80icio, reaperfreaker) - bundled ONNX Runtime downgraded to 1.16.3 for `darwin64`, the last release that runs on macOS 10.15. ARM build stays on 1.24.4.
+- **Apply Stretch Markers silent failure** (plush2) - status bar now reports "Inserted N markers" or an explicit error ("No beats detected", "Failed to insert stretch markers") instead of doing nothing.
+- **Tempo Map wiped unrelated markers** (gkurtenbach) - only tempo markers inside the item's time range are deleted now; markers belonging to other items or to manual edits are preserved.
+- **Tempo Map stretched the source item** (Daodan #1) - `C_BEATATTACHMODE` is set to Time after inserting tempo markers, so audio doesn't rescale when the project grid changes.
+- **Detect Beats enabled on MIDI items** (Mercado_Negro) - button is now disabled when the selected item has no audio source; the source label shows `[No audio source]` and a tooltip explains why.
+
+### Added
+- **Visual download progress bar** (Daodan #7) - first-run model download now shows the same progress bar used by detection, not just a status text.
+- **"Press N for next gap" hint** (Daodan #6) - small hint under the BEATS badge while gaps exist, so the shortcut is discoverable.
+- **Portable model location** (akademie) - model can be placed next to the plugin binary (`UserPlugins/beat_this_final0.onnx` or `UserPlugins/ReaBeat/models/`) for portable REAPER setups; `~/.reabeat/models/` still works as the default download target.
+
+### Changed
+- **Beat drag hit-test** widened from 8 px to 12 px (Daodan #2) - easier to grab beats in clustered passages without being overly ambiguous.
+- **Gap suggestion lines** changed from red (`0x40d94848`) to teal (`0xc080e0d0`) - readable against the red gap tint instead of blending into it (Daodan #3).
+- **Docked window auto-activates** after `DockWindowAddEx` so it shows up immediately after toggling, no extra tab click needed (Daodan #8).
+
+---
+
 ## [2.0.1] - 2026-04-17
 
 Cross-platform fixes and improvements.

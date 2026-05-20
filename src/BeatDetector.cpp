@@ -250,12 +250,29 @@ DetectionResult BeatDetector::detect(const std::vector<float>& audioMono,
         interpolatedBeats = std::move(consistent);
     }
 
-    if (progressCb) progressCb("Refining to transients...", 0.80f);
+    // Onset refinement: snap beats/downbeats to nearest audio transient (+/-30ms).
+    // Uses spectral flux STFT with hop=64 samples (~344 fps at 22050 Hz). For very
+    // long audio this builds a frames x 513-bin magnitude matrix that runs to
+    // multiple GB (90 min would need ~3.8 GB just for that matrix and OOMs).
+    // The neural model already gives ~20 ms precision which is fine for most
+    // workflows, so skip refinement past kRefinementMaxSec.
+    constexpr float kRefinementMaxSec = 600.0f;  // 10 min
+    bool refine = (audio22k.size() / 22050.0) <= kRefinementMaxSec;
 
-    // Onset refinement: snap beats/downbeats to nearest audio transient (+/-30ms)
-    // Uses spectral flux onset detection (replaces Python librosa)
-    auto refinedBeats = OnsetRefinement::refine(audio22k, 22050, interpolatedBeats);
-    auto rawDownbeats = OnsetRefinement::refine(audio22k, 22050, ppResult.downbeatTimes);
+    std::vector<float> refinedBeats;
+    std::vector<float> rawDownbeats;
+    if (refine)
+    {
+        if (progressCb) progressCb("Refining to transients...", 0.80f);
+        refinedBeats = OnsetRefinement::refine(audio22k, 22050, interpolatedBeats);
+        rawDownbeats = OnsetRefinement::refine(audio22k, 22050, ppResult.downbeatTimes);
+    }
+    else
+    {
+        if (progressCb) progressCb("Skipping refinement (long audio)...", 0.80f);
+        refinedBeats = interpolatedBeats;
+        rawDownbeats = ppResult.downbeatTimes;
+    }
 
     result.beats = refinedBeats;
 
@@ -332,43 +349,75 @@ DetectionResult BeatDetector::detectFile(const std::string& filePath,
         return result;
     }
 
-    // Read all samples via REAPER's decoders
-    std::vector<ReaSample> buffer(static_cast<size_t>(numSamples) * numChannels);
+    // Read audio in 60-second chunks and downmix to mono inline.
+    // A monolithic GetSamples() call would need ~7.6 GB for a 90-minute
+    // stereo file (ReaSample is double = 8 bytes per sample, per channel)
+    // which OOMs on most systems. Chunked reading keeps peak interleaved
+    // buffer to a fixed ~42 MB regardless of file length.
+    std::vector<float> mono;
+    try
+    {
+        mono.reserve(static_cast<size_t>(numSamples));
 
-    PCM_source_transfer_t transfer = {};
-    transfer.time_s = 0.0;
-    transfer.samplerate = sampleRate;
-    transfer.nch = numChannels;
-    transfer.length = numSamples;
-    transfer.samples = buffer.data();
+        constexpr int kChunkSec = 60;
+        int chunkSamples = sampleRate * kChunkSec;
+        std::vector<ReaSample> chunkBuf(static_cast<size_t>(chunkSamples) * numChannels);
 
-    source->GetSamples(&transfer);
+        PCM_source_transfer_t transfer = {};
+        transfer.samplerate = sampleRate;
+        transfer.nch = numChannels;
+        transfer.samples = chunkBuf.data();
+
+        int offsetSamples = 0;
+        while (offsetSamples < numSamples)
+        {
+            int thisChunk = std::min(chunkSamples, numSamples - offsetSamples);
+            transfer.time_s = static_cast<double>(offsetSamples) / sampleRate;
+            transfer.length = thisChunk;
+            transfer.samples_out = 0;
+
+            source->GetSamples(&transfer);
+            int read = transfer.samples_out;
+            if (read < 1)
+                break;
+
+            if (numChannels == 1)
+            {
+                for (int i = 0; i < read; ++i)
+                    mono.push_back(static_cast<float>(chunkBuf[i]));
+            }
+            else
+            {
+                for (int i = 0; i < read; ++i)
+                {
+                    double sum = 0;
+                    for (int ch = 0; ch < numChannels; ++ch)
+                        sum += chunkBuf[static_cast<size_t>(i) * numChannels + ch];
+                    mono.push_back(static_cast<float>(sum / numChannels));
+                }
+            }
+
+            offsetSamples += read;
+            if (progressCb && numSamples > 0)
+                progressCb("Reading audio...",
+                           0.05f * static_cast<float>(offsetSamples) / numSamples);
+        }
+    }
+    catch (const std::bad_alloc&)
+    {
+        delete source;
+        DetectionResult result;
+        result.error = "Out of memory reading audio. The item may be too long for available RAM - try splitting it.";
+        return result;
+    }
+
     delete source;
 
-    int samplesRead = transfer.samples_out;
-    if (samplesRead < 1)
+    if (mono.empty())
     {
         DetectionResult result;
         result.error = "Failed to read audio samples";
         return result;
-    }
-
-    // Convert to mono
-    std::vector<float> mono(samplesRead);
-    if (numChannels == 1)
-    {
-        for (int i = 0; i < samplesRead; ++i)
-            mono[i] = static_cast<float>(buffer[i]);
-    }
-    else
-    {
-        for (int i = 0; i < samplesRead; ++i)
-        {
-            double sum = 0;
-            for (int ch = 0; ch < numChannels; ++ch)
-                sum += buffer[static_cast<size_t>(i) * numChannels + ch];
-            mono[i] = static_cast<float>(sum / numChannels);
-        }
     }
 
     return detect(mono, sampleRate, progressCb);

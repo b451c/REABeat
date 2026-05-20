@@ -75,6 +75,35 @@ Currently we skip refinement past 10 minutes (saves the 3.8 GB magnitudes matrix
 
 ## Open user issues (no fix yet)
 
+### bobo198504 - Detect Beats stays grayed out on Windows 11 (Unicode home dir suspected)
+**Source:** GitHub issue #1
+**Status:** Awaiting v2.0.2 retest by reporter
+
+User reports Detect Beats button disabled after selecting an audio item, no progress bar visible. Two likely causes:
+
+1. **Model download silently failing in v2.0.1** - no visible progress feedback, user can't tell. **v2.0.2 fixes the symptom** (visual progress bar, "Downloading model..." button label, portable model fallback).
+
+2. **Unicode home directory path bug** in `BeatDetector::loadModel` (src/BeatDetector.cpp:37):
+   ```cpp
+   std::wstring widePath(modelPath.begin(), modelPath.end());
+   ```
+   This copies bytes 1:1 from `std::string` (UTF-8 from JUCE) to `std::wstring` (UTF-16). Works only for ASCII. A Windows username with Chinese/Cyrillic/Polish characters produces a corrupted wide string, ORT throws, `modelLoaded_` stays false, button stays grey.
+
+**Fix (hotfix candidate for v2.0.3):**
+```cpp
+#ifdef _WIN32
+    int wlen = MultiByteToWideChar(CP_UTF8, 0, modelPath.c_str(), -1, nullptr, 0);
+    std::wstring widePath(wlen > 0 ? wlen - 1 : 0, L'\0');
+    if (wlen > 1)
+        MultiByteToWideChar(CP_UTF8, 0, modelPath.c_str(), -1, widePath.data(), wlen);
+    session_ = std::make_unique<Ort::Session>(*env_, widePath.c_str(), opts);
+#endif
+```
+
+Also audit `ModelManager` paths - JUCE's `String::toStdString()` returns UTF-8 but the assumption should be explicit.
+
+Trigger hotfix if bobo confirms v2.0.2 download succeeds but plugin still doesn't load.
+
 ### reaperfreaker - Debian Trixie not loading
 **Source:** Forum post #6
 **Status:** Awaiting diagnostics
@@ -93,12 +122,60 @@ Mitigations to consider:
 - Build on Ubuntu 20.04 instead of 22.04 (older glibc baseline)
 - `-static-libstdc++ -static-libgcc` link flags
 
+### reaperfreaker - macOS Mojave 10.14 support
+**Source:** Forum post #6 (separate from Debian)
+**Status:** Open, not yet implemented
+
+Plugin currently builds with `CMAKE_OSX_DEPLOYMENT_TARGET=10.15` for the Intel build. ORT 1.16.3 (now bundled for darwin64) actually supports `minos 10.14` per `otool -l`, so the ORT dep is fine. Only the plugin's own deployment target is blocking Mojave.
+
+To enable Mojave:
+- Lower `CMAKE_OSX_DEPLOYMENT_TARGET` to 10.14 in `.github/workflows/build.yml` macOS-x86_64 matrix entry
+- Verify no C++20 features used that require macOS 10.15+ (probably fine - main culprit would be filesystem APIs)
+- Test that built plugin actually loads on Mojave (REAPER 7+ supports Mojave per their forums)
+
+Effort: ~30 min. Risk: LOW (worst case we revert to 10.15). Trigger if reaperfreaker confirms he still uses Mojave.
+
+### flark - Font size adjustment
+**Source:** Forum post #32 (Linux user, "getting old")
+**Status:** Open, no specific plan
+
+User wants larger text in the plugin UI. Currently sizes are hardcoded throughout `MainComponent.cpp` and `WaveformView.cpp`.
+
+Options:
+- DPI scaling already partially handled by JUCE - audit and fix any hardcoded font sizes
+- Add a "UI scale" combo in plugin (1.0x / 1.25x / 1.5x / 2.0x)
+- Multiply all `juce::FontOptions(N.0f)` calls through a single scale factor
+
+Effort: ~2-3h. Risk: MEDIUM (visual regressions possible). Probably v2.0.4+ once we have a feel for who else wants it.
+
 ---
 
 ## Long-term ideas
 
-- C++ unit tests (none exist today)
-- Cancel button during detection (reuse "Detect Beats" as "Cancel" while detecting)
-- Free `mono` buffer after resample (release ~900 MB on long files)
-- Compound meter heuristic in `TimeSigDetector` (BPM > 130 && bar=2 → 6/8 hint)
-- Forum: post v2.0.2 announcement, reply per user thread
+- **C++ unit tests** - none exist today. At minimum: MelSpectrogram numerical regression test vs Python output, BeatInterpolator gap-fill logic, ReaperActions stretch marker construction (without actually calling REAPER API).
+- **Cancel button during detection** - reuse "Detect Beats" as "Cancel" while detecting. Pattern from reamix.me_native: `alive_` shared atomic + `threadShouldExit()` between stages.
+- **Free `mono` buffer after resample** - release ~900 MB on long files. Requires changing detect() signature to take rvalue ref or moving the call site.
+- **Compound meter heuristic in `TimeSigDetector`** (BPM > 130 && bar=2 → 6/8 hint). Better than nothing, but Daodan #9 dropdown is more honest.
+- **CI maintenance**:
+  - `ubuntu-22.04` GitHub-hosted runners will be removed at some point - bump to 24.04 when needed (or stay on older for glibc compat)
+  - `actions/checkout@v4`, `actions/upload-artifact@v4` use Node 20 which is deprecated June 2026
+  - `windows-latest` redirects to `windows-2025-vs2026` by June 15, 2026 - confirm v2026 toolset works
+- **Forum**:
+  - Post v2.0.2 announcement (draft ready in `drafts/forum_post_v2.0.2.txt`)
+  - Email Alex Shturmak (draft ready in `drafts/email_alex_shturmak_v2.0.2.txt`)
+  - Reply per user after v2.0.2 retest reports come in
+- **Sample-perfect alignment for long files** - if streaming OnsetRefinement still can't keep up, alternative: run refinement only within a small window around each model-predicted beat (sparse, O(beats x small window) instead of O(audio_length)).
+
+---
+
+## Post-v2.0.2 verification still needed
+
+Just shipped, not yet confirmed by external users:
+- 80icio retest on Catalina Intel (was ORT 1.20.1 incompatibility - now 1.16.3)
+- fightclxb / squibs retest on Windows 11 (was missing VC++ Redist - now statically linked)
+- plush2 retest of Insert Stretch Markers on Windows 11 (was silent fail - now status messages)
+- Mercado_Negro retest on macOS Tahoe + M4 (was MIDI item false-enable - now disabled)
+- gkurtenbach retest of Insert Tempo Map preserving other-item markers
+- bobo198504 retest of Detect Beats button (waiting since GitHub Issue #1 reply)
+- Daodan retest of 5 UX points (item drag, suggestion color, N hint, dock activate, download progress)
+- Alex Shturmak retest of long-file detection (waiting since email reply queued in drafts/)
